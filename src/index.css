@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+/* Animation d'erreur du pavé PIN : 3 oscillations horizontales sur ~300ms */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-8px);
+  }
+  40%,
+  80% {
+    transform: translateX(8px);
+  }
+}
+
+.animate-shake {
+  animation: shake 300ms ease-in-out;
+}

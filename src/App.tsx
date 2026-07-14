@@ -1,24 +1,38 @@
-
+// src/App.tsx
 import { createBrowserRouter, RouterProvider } from "react-router";
+import AppGuard from "./components/AppGuard";
+import Setup from "./pages/Setup";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <Login/> 
+    // Page de configuration initiale — accessible librement
+    path: "/setup",
+    element: <Setup />,
   },
   {
+    // Page de login — protégée par AppGuard (vérifie que l'huilerie existe)
+    path: "/",
+    element: (
+      <AppGuard>
+        <Login />
+      </AppGuard>
+    ),
+  },
+  {
+    // Dashboard — protégé ET nécessite d'être connecté
     path: "/dashboard",
-    element: <Dashboard/>
-  }
+    element: (
+      <AppGuard requireAuth>
+        <Dashboard />
+      </AppGuard>
+    ),
+  },
 ]);
 
-
-function App(){
-  return(
-    <RouterProvider router={router}/>
-  )
+function App() {
+  return <RouterProvider router={router} />;
 }
 
-export default App
+export default App;
