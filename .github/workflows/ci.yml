@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Récupère ton code
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      # 2. Installe Node.js
+      - name: Installation de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # 3. Installe les dépendances du projet
+      - name: Installation des dépendances
+        run: npm ci
+
+      # 4. Vérifie le style du code
+      - name: Lint
+        run: npm run lint
+
+      # 5. Vérifie que le code compile
+      - name: Compilation TypeScript
+        run: npx tsc -b
+
+      # 6. Lance les tests unitaires
+      - name: Tests unitaires
+        run: npm test
