@@ -5,6 +5,8 @@ import Setup from "./pages/Setup";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ClientsList from "./pages/ClientsList";
+import DepotsList from "./pages/DepotsList";
+import DepotNouveau from "./pages/DepotNouveau";
 
 const router = createBrowserRouter([
   {
@@ -36,6 +38,23 @@ const router = createBrowserRouter([
     element: (
       <AppGuard requireAuth>
         <ClientsList />
+      </AppGuard>
+    ),
+  },
+  {
+    // Dépôts — protégé ET nécessite d'être connecté
+    path: "/depots",
+    element: (
+      <AppGuard requireAuth>
+        <DepotsList />
+      </AppGuard>
+    ),
+  },
+  {
+    path: "/depots/nouveau",
+    element: (
+      <AppGuard requireAuth>
+        <DepotNouveau />
       </AppGuard>
     ),
   },

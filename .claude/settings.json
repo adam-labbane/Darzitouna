@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node scripts/test-operateur-archivage.mjs)"
+      "Bash(node scripts/test-operateur-archivage.mjs)",
+      "Bash(ls \"C:\\\\Users\\\\adam\\\\AppData\\\\Local\\\\ms-playwright\" 2>&1 | head -5 *)",
+      "Read(//c/Users/adam/AppData/Local/ms-playwright/**)",
+      "Bash(node .scratch-verify-depots.mjs)",
+      "Bash(node .scratch-verify-no-season.mjs)",
+      "Bash(taskkill //PID 32176 //F)"
     ]
   }
 }
