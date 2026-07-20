@@ -4,6 +4,7 @@ import AppGuard from "./components/AppGuard";
 import Setup from "./pages/Setup";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import ClientsList from "./pages/ClientsList";
 
 const router = createBrowserRouter([
   {
@@ -26,6 +27,15 @@ const router = createBrowserRouter([
     element: (
       <AppGuard requireAuth>
         <Dashboard />
+      </AppGuard>
+    ),
+  },
+  {
+    // Clients — protégé ET nécessite d'être connecté
+    path: "/clients",
+    element: (
+      <AppGuard requireAuth>
+        <ClientsList />
       </AppGuard>
     ),
   },
