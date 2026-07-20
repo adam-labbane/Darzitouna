@@ -80,3 +80,15 @@ export async function startSession(
   });
   if (error) throw error;
 }
+
+/**
+ * Ferme la session Supabase Auth (invalide le JWT côté serveur). Vider
+ * uniquement le localStorage (session.ts logout()) ne suffit pas : le
+ * jeton resterait valide jusqu'à son expiration et continuerait à
+ * satisfaire les policies RLS si quelqu'un le rejouait — signOut()
+ * révoque réellement la session côté Supabase Auth.
+ */
+export async function endSession(client: SupabaseClient): Promise<void> {
+  const { error } = await client.auth.signOut();
+  if (error) throw error;
+}

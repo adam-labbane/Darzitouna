@@ -1,12 +1,14 @@
 // src/App.tsx
 import { createBrowserRouter, RouterProvider } from "react-router";
 import AppGuard from "./components/AppGuard";
+import AppLayout from "./components/AppLayout";
 import Setup from "./pages/Setup";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ClientsList from "./pages/ClientsList";
 import DepotsList from "./pages/DepotsList";
 import DepotNouveau from "./pages/DepotNouveau";
+import ModuleAVenir from "./pages/ModuleAVenir";
 
 const router = createBrowserRouter([
   {
@@ -24,39 +26,25 @@ const router = createBrowserRouter([
     ),
   },
   {
-    // Dashboard — protégé ET nécessite d'être connecté
-    path: "/dashboard",
+    // Toutes les pages connectées partagent UNE SEULE garde d'authentification
+    // et UN SEUL layout (sidebar + en-tête), montés ici plutôt que répétés
+    // dans chaque route. AppLayout rend <Outlet/> pour la page active.
     element: (
       <AppGuard requireAuth>
-        <Dashboard />
+        <AppLayout />
       </AppGuard>
     ),
-  },
-  {
-    // Clients — protégé ET nécessite d'être connecté
-    path: "/clients",
-    element: (
-      <AppGuard requireAuth>
-        <ClientsList />
-      </AppGuard>
-    ),
-  },
-  {
-    // Dépôts — protégé ET nécessite d'être connecté
-    path: "/depots",
-    element: (
-      <AppGuard requireAuth>
-        <DepotsList />
-      </AppGuard>
-    ),
-  },
-  {
-    path: "/depots/nouveau",
-    element: (
-      <AppGuard requireAuth>
-        <DepotNouveau />
-      </AppGuard>
-    ),
+    children: [
+      { path: "/dashboard", element: <Dashboard /> },
+      { path: "/clients", element: <ClientsList /> },
+      { path: "/depots", element: <DepotsList /> },
+      { path: "/depots/nouveau", element: <DepotNouveau /> },
+      { path: "/pressages", element: <ModuleAVenir titre="Pressage" /> },
+      { path: "/stocks", element: <ModuleAVenir titre="Stocks" /> },
+      { path: "/factures", element: <ModuleAVenir titre="Factures" /> },
+      { path: "/grignons", element: <ModuleAVenir titre="Grignons" /> },
+      { path: "/config", element: <ModuleAVenir titre="Configuration" /> },
+    ],
   },
 ]);
 

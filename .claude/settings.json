@@ -6,7 +6,17 @@
       "Read(//c/Users/adam/AppData/Local/ms-playwright/**)",
       "Bash(node .scratch-verify-depots.mjs)",
       "Bash(node .scratch-verify-no-season.mjs)",
-      "Bash(taskkill //PID 32176 //F)"
+      "Bash(taskkill //PID 32176 //F)",
+      "Bash(node .scratch-verify-nav.mjs)",
+      "Bash(taskkill //PID 26904 //F)",
+      "Bash(node .scratch-repro-bug.mjs)",
+      "Bash(node .scratch-repro-bug2.mjs)",
+      "Bash(node .scratch-repro-bug3.mjs)",
+      "Bash(node .scratch-repro-bug4.mjs)",
+      "Bash(node .scratch-repro-bug5.mjs)",
+      "Bash(node .scratch-repro-bug6.mjs)",
+      "Bash(node -e ' *)",
+      "Bash(taskkill //PID 34580 //F)"
     ]
   }
 }

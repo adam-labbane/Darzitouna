@@ -5,7 +5,7 @@
 // d'environnement Supabase.
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { fetchLoginUsers, startSession, verifyUserPin } from "../lib/auth";
+import { endSession, fetchLoginUsers, startSession, verifyUserPin } from "../lib/auth";
 
 function mockClient(rpc: SupabaseClient["rpc"]): SupabaseClient {
   return { rpc } as unknown as SupabaseClient;
@@ -13,6 +13,10 @@ function mockClient(rpc: SupabaseClient["rpc"]): SupabaseClient {
 
 function mockAuthClient(signInWithPassword: ReturnType<typeof vi.fn>): SupabaseClient {
   return { auth: { signInWithPassword } } as unknown as SupabaseClient;
+}
+
+function mockSignOutClient(signOut: ReturnType<typeof vi.fn>): SupabaseClient {
+  return { auth: { signOut } } as unknown as SupabaseClient;
 }
 
 describe("fetchLoginUsers", () => {
@@ -84,5 +88,21 @@ describe("startSession", () => {
     await expect(
       startSession(mockAuthClient(signInWithPassword), "user-1", "1234"),
     ).rejects.toThrow("network");
+  });
+});
+
+describe("endSession", () => {
+  it("appelle signOut() pour invalider la session côté serveur", async () => {
+    const signOut = vi.fn().mockResolvedValue({ error: null });
+
+    await endSession(mockSignOutClient(signOut));
+
+    expect(signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("propage l'erreur si signOut() échoue", async () => {
+    const signOut = vi.fn().mockResolvedValue({ error: new Error("network") });
+
+    await expect(endSession(mockSignOutClient(signOut))).rejects.toThrow("network");
   });
 });

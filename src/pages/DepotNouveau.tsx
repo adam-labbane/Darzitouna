@@ -10,13 +10,16 @@ import { supabase } from "../lib/supabase";
 import { getCurrentUser, getHuilerieId } from "../lib/session";
 import { getClients, createClient } from "../lib/clients";
 import { createDepot, getActiveSeason } from "../lib/depots";
+import { getHuilerieName } from "../lib/huilerie";
 import { computeNetWeight, computeRemainingDue, computeTotalAmount } from "../lib/depotCalculations";
 import { depotSchema } from "../lib/depotSchema";
+import { resolveBackAction } from "../lib/depotWizard";
 import { buildTicketData, browserPrinter, type TicketData } from "../lib/ticket";
 import type { Client } from "../types/client";
 import type { Saison } from "../types/saison";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import ClientFormModal from "../components/ClientFormModal";
+import ConfirmDialog from "../components/ConfirmDialog";
 import TicketPreview from "../components/TicketPreview";
 
 const TOTAL_STEPS = 4;
@@ -50,15 +53,9 @@ export default function DepotNouveau() {
       });
 
     if (huilerieId) {
-      // Promise.resolve(...) : le query builder Supabase est "thenable"
-      // mais pas une vraie Promise (pas de .catch()/.finally() natifs) —
-      // l'envelopper permet d'utiliser la chaîne .then()/.catch() comme
-      // partout ailleurs dans ce fichier.
-      Promise.resolve(
-        supabase.from("huilerie").select("nom_societe").eq("id", huilerieId).single(),
-      )
-        .then(({ data }: { data: { nom_societe: string } | null }) => {
-          if (!cancelled && data) setHuilerieNom(data.nom_societe);
+      getHuilerieName(supabase, huilerieId)
+        .then((nom) => {
+          if (!cancelled && nom) setHuilerieNom(nom);
         })
         .catch(() => {
           // Non bloquant : le ticket affichera juste le nom par défaut.
@@ -124,6 +121,28 @@ export default function DepotNouveau() {
     (step === 1 && selectedClient !== null) ||
     (step === 2 && poidsNetValide) ||
     (step === 3 && achatValide);
+
+  // Bouton retour du wizard : à l'étape 1, "Précédent" devient "Quitter"
+  // et ramène à la liste des dépôts — avec confirmation si l'opérateur a
+  // déjà commencé à saisir quelque chose, pour éviter une perte
+  // accidentelle (ConfirmDialog déjà utilisé pour l'archivage client).
+  const hasUnsavedData =
+    selectedClient !== null || poidsBrut !== "" || poidsTare !== "" || refBac !== "" || isAchat;
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+
+  const handleBack = () => {
+    switch (resolveBackAction(step, hasUnsavedData)) {
+      case "previous-step":
+        setStep((s) => s - 1);
+        break;
+      case "confirm-exit":
+        setExitConfirmOpen(true);
+        break;
+      case "exit":
+        navigate("/depots");
+        break;
+    }
+  };
 
   const handleClientCreated = async (data: { nom_complet: string; telephone?: string }) => {
     if (!huilerieId) return;
@@ -265,6 +284,14 @@ export default function DepotNouveau() {
       </header>
 
       <main className="p-4 max-w-lg mx-auto">
+        {/* min-h stabilise la position du bloc de boutons (Précédent/
+            Quitter/Suivant) d'une étape à l'autre. Sans ça, un contenu
+            d'étape plus court (ex: pesée) fait remonter les boutons par
+            rapport à un contenu plus long (ex: recherche client avec
+            résultats) : un opérateur qui retape au même endroit après
+            "Précédent" peut alors toucher un autre bouton que celui visé.
+            Bug réel constaté : cf. plan de correction des bogues. */}
+        <div className="min-h-[420px]">
         {step === 1 && (
           <section>
             <label htmlFor="client-search" className="block text-sm font-medium text-gray-600 mb-2">
@@ -285,7 +312,13 @@ export default function DepotNouveau() {
               </p>
             )}
 
-            <ul className="space-y-2 mb-4">
+            {/* max-h + overflow : sans borne, une liste de résultats longue
+                pousse le bouton retour toujours plus bas, et une liste
+                courte le remonte — le bouton change de position à chaque
+                recherche/étape (voir le bug corrigé : un second tap au
+                même endroit après être revenu à l'étape 1 atterrissait
+                sur "+ Nouveau client" au lieu de "Quitter"). */}
+            <ul className="space-y-2 mb-4 max-h-64 overflow-y-auto">
               {clientResults.map((client) => (
                 <li key={client.id}>
                   <button
@@ -503,17 +536,16 @@ export default function DepotNouveau() {
             </button>
           </section>
         )}
+        </div>
 
         <div className="flex gap-3 mt-6">
-          {step > 1 && (
-            <button
-              type="button"
-              onClick={() => setStep((s) => s - 1)}
-              className="h-14 min-w-[56px] px-6 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold"
-            >
-              Précédent
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleBack}
+            className="h-14 min-w-[56px] px-6 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold"
+          >
+            {step > 1 ? "Précédent" : "Quitter"}
+          </button>
           {step < TOTAL_STEPS && (
             <button
               type="button"
@@ -530,6 +562,16 @@ export default function DepotNouveau() {
       {clientFormOpen && (
         <ClientFormModal onSubmit={handleClientCreated} onClose={() => setClientFormOpen(false)} />
       )}
+
+      <ConfirmDialog
+        open={exitConfirmOpen}
+        title="Quitter sans enregistrer ?"
+        message="Les informations déjà saisies pour ce dépôt seront perdues."
+        confirmLabel="Quitter"
+        destructive
+        onConfirm={() => navigate("/depots")}
+        onCancel={() => setExitConfirmOpen(false)}
+      />
     </div>
   );
 }
