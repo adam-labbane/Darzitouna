@@ -3,7 +3,7 @@
 -- Rechargées à chaque `npx supabase db reset`
 -- ============================================================
 
--- 1. Une huilerie de test avec son code d'activation
+-- 1. Une huilerie de test (A) avec son code d'activation
 INSERT INTO huilerie (id, nom_societe, matricule_fiscal, code_activation)
 VALUES (
   '11111111-1111-1111-1111-111111111111',
@@ -24,8 +24,11 @@ VALUES (
   0.25
 );
 
--- 3. Deux utilisateurs : un gérant et un opérateur
--- Le PIN est hashé avec crypt() — PIN gérant = 1234, PIN opérateur = 0000
+-- 3. Deux utilisateurs de l'huilerie A : un gérant et un opérateur
+-- Le hash_pin ci-dessous est un placeholder immédiatement remplacé par
+-- set_user_pin(), qui hache le vrai PIN ET crée/synchronise le compte
+-- Supabase Auth lié (voir migration 20260714140000_auth_session_bridge.sql).
+-- PIN gérant = 1234, PIN opérateur = 0000
 INSERT INTO utilisateur (id, huilerie_id, nom_complet, role, login_code, hash_pin)
 VALUES
   (
@@ -34,7 +37,7 @@ VALUES
     'Mohamed Ben Ali',
     'GERANT',
     'mohamed',
-    crypt('1234', gen_salt('bf'))
+    crypt('placeholder', gen_salt('bf'))
   ),
   (
     '44444444-4444-4444-4444-444444444444',
@@ -42,5 +45,65 @@ VALUES
     'Ahmed Trabelsi',
     'OPERATEUR',
     'ahmed',
-    crypt('0000', gen_salt('bf'))
+    crypt('placeholder', gen_salt('bf'))
   );
+
+SELECT set_user_pin('33333333-3333-3333-3333-333333333333', '1234');
+SELECT set_user_pin('44444444-4444-4444-4444-444444444444', '0000');
+
+-- ============================================================
+-- 4. Huilerie B — sert UNIQUEMENT à prouver l'isolation multi-tenant
+-- (voir scripts/verify-multi-tenant-isolation.mjs). Un utilisateur
+-- connecté côté huilerie A ne doit jamais voir ces données.
+-- ============================================================
+INSERT INTO huilerie (id, nom_societe, matricule_fiscal, code_activation)
+VALUES (
+  '55555555-5555-5555-5555-555555555555',
+  'Huilerie Zitouna Nord',
+  'TN-654321',
+  'ZTN-9K2P-3F8X-Q7M4'
+);
+
+INSERT INTO saison (id, huilerie_id, nom, date_debut, date_fin, is_active, config_prix_kilo_service)
+VALUES (
+  '66666666-6666-6666-6666-666666666666',
+  '55555555-5555-5555-5555-555555555555',
+  '2025-2026',
+  '2025-09-01',
+  '2026-01-31',
+  true,
+  0.25
+);
+
+INSERT INTO utilisateur (id, huilerie_id, nom_complet, role, login_code, hash_pin)
+VALUES (
+  '77777777-7777-7777-7777-777777777777',
+  '55555555-5555-5555-5555-555555555555',
+  'Fatma Gharbi',
+  'GERANT',
+  'fatma',
+  crypt('placeholder', gen_salt('bf'))
+);
+
+SELECT set_user_pin('77777777-7777-7777-7777-777777777777', '5678');
+
+-- ============================================================
+-- 5. Un client par huilerie — preuve d'isolation multi-tenant : un
+-- utilisateur connecté côté huilerie A ne doit jamais pouvoir lire
+-- le client de l'huilerie B via une requête directe (RLS).
+-- ============================================================
+INSERT INTO client (id, huilerie_id, nom_complet, telephone)
+VALUES (
+  '88888888-8888-8888-8888-888888888888',
+  '11111111-1111-1111-1111-111111111111',
+  'Client Huilerie A',
+  '20000001'
+);
+
+INSERT INTO client (id, huilerie_id, nom_complet, telephone)
+VALUES (
+  '99999999-9999-9999-9999-999999999999',
+  '55555555-5555-5555-5555-555555555555',
+  'Client Huilerie B',
+  '20000002'
+);

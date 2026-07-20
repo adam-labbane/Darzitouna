@@ -5,10 +5,14 @@
 // d'environnement Supabase.
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { fetchLoginUsers, verifyUserPin } from "../lib/auth";
+import { fetchLoginUsers, startSession, verifyUserPin } from "../lib/auth";
 
 function mockClient(rpc: SupabaseClient["rpc"]): SupabaseClient {
   return { rpc } as unknown as SupabaseClient;
+}
+
+function mockAuthClient(signInWithPassword: ReturnType<typeof vi.fn>): SupabaseClient {
+  return { auth: { signInWithPassword } } as unknown as SupabaseClient;
 }
 
 describe("fetchLoginUsers", () => {
@@ -54,5 +58,31 @@ describe("verifyUserPin", () => {
   it("propage l'erreur Supabase sans jamais l'avaler silencieusement", async () => {
     const rpc = vi.fn().mockResolvedValue({ data: null, error: new Error("timeout") });
     await expect(verifyUserPin(mockClient(rpc), "user-1", "1234")).rejects.toThrow("timeout");
+  });
+});
+
+describe("startSession", () => {
+  it("appelle signInWithPassword avec l'email interne et le mot de passe dérivé du PIN", async () => {
+    const signInWithPassword = vi.fn().mockResolvedValue({ data: {}, error: null });
+
+    await startSession(mockAuthClient(signInWithPassword), "user-1", "1234");
+
+    expect(signInWithPassword).toHaveBeenCalledTimes(1);
+    const call = signInWithPassword.mock.calls[0][0] as { email: string; password: string };
+    expect(call.email).toBe("user-1@darzitouna.local");
+    // Le mot de passe ne doit jamais être le PIN en clair.
+    expect(call.password).not.toBe("1234");
+    expect(call.password).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("propage l'erreur si signInWithPassword échoue (ex: panne réseau)", async () => {
+    const signInWithPassword = vi.fn().mockResolvedValue({
+      data: {},
+      error: new Error("network"),
+    });
+
+    await expect(
+      startSession(mockAuthClient(signInWithPassword), "user-1", "1234"),
+    ).rejects.toThrow("network");
   });
 });

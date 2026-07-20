@@ -6,6 +6,7 @@
 // avoir besoin d'une vraie connexion réseau ni des variables d'environnement
 // VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY dans les tests unitaires.
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { deriveAuthPassword, internalEmailFor } from "./authPassword";
 
 // Forme des données renvoyées par la fonction PostgreSQL get_login_users.
 // Volontairement minimale : jamais de hash de PIN ni d'autre donnée sensible.
@@ -54,4 +55,28 @@ export async function verifyUserPin(
   });
   if (error) throw error;
   return data === true;
+}
+
+/**
+ * Ouvre une vraie session Supabase Auth pour l'utilisateur, une fois son
+ * PIN déjà validé par verifyUserPin(). C'est ce qui fait exister un JWT
+ * contenant huilerie_id (via le Custom Access Token Hook côté Postgres,
+ * cf. migration 20260714140000_auth_session_bridge.sql) — sans session,
+ * auth.jwt() vaut NULL et aucune policy RLS ne filtre quoi que ce soit.
+ *
+ * L'email interne et le mot de passe dérivé ne sont qu'un mécanisme de
+ * transport vers signInWithPassword : jamais montrés à l'écran, jamais
+ * choisis par l'utilisateur (qui continue de ne taper que son PIN).
+ */
+export async function startSession(
+  client: SupabaseClient,
+  userId: string,
+  pin: string,
+): Promise<void> {
+  const password = await deriveAuthPassword(userId, pin);
+  const { error } = await client.auth.signInWithPassword({
+    email: internalEmailFor(userId),
+    password,
+  });
+  if (error) throw error;
 }

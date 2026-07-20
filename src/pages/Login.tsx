@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { supabase } from "../lib/supabase";
 import { getHuilerieId, setCurrentUser } from "../lib/session";
-import { fetchLoginUsers, verifyUserPin, type LoginUser } from "../lib/auth";
+import { fetchLoginUsers, startSession, verifyUserPin, type LoginUser } from "../lib/auth";
 import { isPinComplete } from "../lib/pin";
 import {
   initialAttemptState,
@@ -118,6 +118,12 @@ export default function Login() {
       const ok = await verifyUserPin(supabase, selectedUser.id, pinAttempt);
 
       if (ok) {
+        // Le PIN est validé métier — on ouvre maintenant une vraie session
+        // Supabase Auth : c'est elle qui porte le JWT (huilerie_id via le
+        // Custom Access Token Hook), sans quoi aucune policy RLS ne filtre
+        // les données de l'huilerie sur le reste de l'app.
+        await startSession(supabase, selectedUser.id, pinAttempt);
+
         setCurrentUser({
           id: selectedUser.id,
           nom: selectedUser.nom_complet,
@@ -129,6 +135,9 @@ export default function Login() {
 
       handleFailedAttempt();
     } catch {
+      // Ne devrait survenir qu'en cas de panne réseau : le PIN vient
+      // d'être validé par verifyUserPin, startSession ne devrait pas
+      // échouer pour une question de PIN incorrect.
       setError("Connexion au serveur impossible. Réessayez.");
     } finally {
       setVerifying(false);
