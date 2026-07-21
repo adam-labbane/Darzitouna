@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Truck } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { getHuilerieId } from "../lib/session";
 import { getDepots } from "../lib/depots";
+import { getHuilerieName } from "../lib/huilerie";
+import { buildTicketData } from "../lib/ticket";
 import type { DepotWithClient, StatutPaiement } from "../types/depot";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useSeasonConsultation } from "../hooks/useSeasonConsultation";
@@ -11,6 +14,7 @@ import NoActiveSeasonMessage from "../components/NoActiveSeasonMessage";
 import Skeleton from "../components/Skeleton";
 import EmptyState from "../components/EmptyState";
 import Pagination from "../components/Pagination";
+import TicketPreview from "../components/TicketPreview";
 
 const STATUT_LABELS: Record<StatutPaiement, string> = {
   NON_PAYE: "Non payé",
@@ -26,7 +30,22 @@ const STATUT_COLORS: Record<StatutPaiement, string> = {
 
 export default function DepotsList() {
   const navigate = useNavigate();
+  const huilerieId = getHuilerieId();
   const { consultedSaison, isReadOnly, loading: seasonLoading } = useSeasonConsultation();
+
+  const [huilerieNom, setHuilerieNom] = useState("Huilerie");
+  useEffect(() => {
+    if (!huilerieId) return;
+    let cancelled = false;
+    getHuilerieName(supabase, huilerieId)
+      .then((nom) => {
+        if (!cancelled && nom) setHuilerieNom(nom);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [huilerieId]);
 
   const [depots, setDepots] = useState<DepotWithClient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +53,7 @@ export default function DepotsList() {
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebouncedValue(searchInput, 300);
   const [statutFilter, setStatutFilter] = useState<StatutPaiement | "">("");
+  const [selectedDepot, setSelectedDepot] = useState<DepotWithClient | null>(null);
 
   useEffect(() => {
     if (!consultedSaison) return;
@@ -138,27 +158,33 @@ export default function DepotsList() {
           <>
             <ul className="space-y-3">
               {pageItems.map((depot) => (
-                <li key={depot.id} className="bg-white rounded-2xl shadow-soft p-4">
-                  <div className="flex flex-wrap justify-between items-start gap-x-3 gap-y-1 mb-1">
-                    <span className="font-mono font-bold text-[#1B4332]">{depot.numero_ticket}</span>
-                    <span className="text-sm text-gray-400">
-                      {new Date(depot.date_depot).toLocaleDateString("fr-FR")}
-                    </span>
-                  </div>
-                  <p className="font-semibold text-gray-900">
-                    {depot.client?.nom_complet ?? "Client inconnu"}
-                  </p>
-                  <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 mt-2 text-sm">
-                    <span className="text-gray-600">
-                      {depot.poids_olives_kg.toFixed(2)} kg —{" "}
-                      {depot.is_achat_olives ? "Achat direct" : "Prestation"}
-                    </span>
-                    {depot.is_achat_olives && (
-                      <span className={`font-semibold ${STATUT_COLORS[depot.statut_paiement_achat]}`}>
-                        {STATUT_LABELS[depot.statut_paiement_achat]}
+                <li key={depot.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDepot(depot)}
+                    className="w-full text-left bg-white rounded-2xl shadow-soft p-4 hover:border-2 hover:border-[#2D6A4F] transition-colors motion-reduce:transition-none"
+                  >
+                    <div className="flex flex-wrap justify-between items-start gap-x-3 gap-y-1 mb-1">
+                      <span className="font-mono font-bold text-[#1B4332]">{depot.numero_ticket}</span>
+                      <span className="text-sm text-gray-400">
+                        {new Date(depot.date_depot).toLocaleDateString("fr-FR")}
                       </span>
-                    )}
-                  </div>
+                    </div>
+                    <p className="font-semibold text-gray-900">
+                      {depot.client?.nom_complet ?? "Client inconnu"}
+                    </p>
+                    <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 mt-2 text-sm">
+                      <span className="text-gray-600">
+                        {depot.poids_olives_kg.toFixed(2)} kg —{" "}
+                        {depot.is_achat_olives ? "Achat direct" : "Prestation"}
+                      </span>
+                      {depot.is_achat_olives && (
+                        <span className={`font-semibold ${STATUT_COLORS[depot.statut_paiement_achat]}`}>
+                          {STATUT_LABELS[depot.statut_paiement_achat]}
+                        </span>
+                      )}
+                    </div>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -176,6 +202,44 @@ export default function DepotsList() {
         >
           +
         </button>
+      )}
+
+      {selectedDepot && (
+        <div
+          className="fixed inset-0 z-40 flex items-start justify-center bg-black/40 p-4 overflow-y-auto"
+          onClick={() => setSelectedDepot(null)}
+        >
+          <div className="w-full max-w-sm mt-8 mb-8" onClick={(event) => event.stopPropagation()}>
+            <div className="flex justify-end mb-2">
+              <button
+                type="button"
+                onClick={() => setSelectedDepot(null)}
+                aria-label="Fermer l'aperçu du ticket"
+                className="min-h-[48px] min-w-[48px] px-4 rounded-xl bg-white shadow-soft font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Fermer
+              </button>
+            </div>
+
+            <TicketPreview
+              ticket={buildTicketData(
+                selectedDepot,
+                selectedDepot.client?.nom_complet ?? "Client inconnu",
+                huilerieNom,
+              )}
+            />
+
+            <div className="flex justify-center mt-4">
+              <button
+                type="button"
+                onClick={() => window.open(`/depots/${selectedDepot.id}/ticket`, "_blank", "noopener,noreferrer")}
+                className="h-14 min-w-[48px] px-6 rounded-xl font-semibold text-white bg-[#2D6A4F] hover:bg-green-800"
+              >
+                Imprimer
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
