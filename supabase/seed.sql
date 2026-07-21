@@ -107,3 +107,58 @@ VALUES (
   'Client Huilerie B',
   '20000002'
 );
+
+-- ============================================================
+-- 6. Cuves de l'huilerie A — niveaux variés pour voir les 4 couleurs
+-- du canvas dès le premier chargement (vert/orange/rouge/gris), plus
+-- une cuve pour la huilerie B (isolation multi-tenant).
+-- ============================================================
+INSERT INTO cuve (id, huilerie_id, nom_reference, emplacement, type_huile, capacite_max, niveau_actuel)
+VALUES
+  (
+    'cccccccc-cccc-cccc-cccc-ccccccccccc1',
+    '11111111-1111-1111-1111-111111111111',
+    'Cuve 1',
+    'Hangar A',
+    'EXTRA',
+    2000,
+    1500 -- 75 % -> vert
+  ),
+  (
+    'cccccccc-cccc-cccc-cccc-ccccccccccc2',
+    '11111111-1111-1111-1111-111111111111',
+    'Cuve 2',
+    'Hangar A',
+    'VIERGE',
+    2000,
+    800 -- 40 % -> orange
+  ),
+  (
+    'cccccccc-cccc-cccc-cccc-ccccccccccc3',
+    '11111111-1111-1111-1111-111111111111',
+    'Cuve 3',
+    'Hangar B',
+    'VIERGE',
+    1500,
+    150 -- 10 % -> rouge
+  ),
+  (
+    'cccccccc-cccc-cccc-cccc-ccccccccccc4',
+    '11111111-1111-1111-1111-111111111111',
+    'Cuve 4',
+    'Hangar B',
+    'LAMPANTE',
+    1000,
+    0 -- 0 % -> gris
+  );
+
+INSERT INTO cuve (id, huilerie_id, nom_reference, emplacement, type_huile, capacite_max, niveau_actuel)
+VALUES (
+  'dddddddd-dddd-dddd-dddd-ddddddddddd1',
+  '55555555-5555-5555-5555-555555555555',
+  'Cuve B1',
+  'Hangar principal',
+  'VIERGE',
+  2000,
+  1000
+);

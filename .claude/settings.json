@@ -16,7 +16,11 @@
       "Bash(node .scratch-repro-bug5.mjs)",
       "Bash(node .scratch-repro-bug6.mjs)",
       "Bash(node -e ' *)",
-      "Bash(taskkill //PID 34580 //F)"
+      "Bash(taskkill //PID 34580 //F)",
+      "Bash(node .scratch-debug-login.mjs)",
+      "Bash(node .scratch-repro-bug1-edit.mjs)",
+      "Bash(node scripts/test-cuve-security-bugs.mjs)",
+      "Bash(taskkill //PID 33940 //F)"
     ]
   }
 }
