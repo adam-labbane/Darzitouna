@@ -5,23 +5,24 @@
 // accès données, génération du ticket) est déléguée à src/lib/ — cette
 // page orchestre l'UI et l'état du formulaire.
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 import { supabase } from "../lib/supabase";
 import { getCurrentUser, getHuilerieId } from "../lib/session";
 import { getClients, createClient } from "../lib/clients";
-import { createDepot, getActiveSeason } from "../lib/depots";
+import { createDepot } from "../lib/depots";
 import { getHuilerieName } from "../lib/huilerie";
 import { computeNetWeight, computeRemainingDue, computeTotalAmount } from "../lib/depotCalculations";
 import { depotSchema } from "../lib/depotSchema";
 import { resolveBackAction } from "../lib/depotWizard";
 import { buildTicketData, browserPrinter, type TicketData } from "../lib/ticket";
 import type { Client } from "../types/client";
-import type { Saison } from "../types/saison";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useSeasonConsultation } from "../hooks/useSeasonConsultation";
 import ClientFormModal from "../components/ClientFormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
 import TicketPreview from "../components/TicketPreview";
 import NoActiveSeasonMessage from "../components/NoActiveSeasonMessage";
+import SearchableSelect from "../components/SearchableSelect";
 
 const TOTAL_STEPS = 4;
 
@@ -29,39 +30,21 @@ export default function DepotNouveau() {
   const navigate = useNavigate();
   const huilerieId = getHuilerieId();
   const currentUser = getCurrentUser();
+  const { consultedSaison: season, isReadOnly, loading: seasonLoading } = useSeasonConsultation();
 
-  // Saison active — chargée une fois au montage. Pas de choix manuel
-  // (décision d'architecture du module).
-  const [season, setSeason] = useState<Saison | null>(null);
-  const [seasonLoading, setSeasonLoading] = useState(true);
-  const [seasonError, setSeasonError] = useState("");
   const [huilerieNom, setHuilerieNom] = useState("Huilerie");
 
   useEffect(() => {
+    if (!huilerieId) return;
     let cancelled = false;
 
-    getActiveSeason(supabase)
-      .then((data) => {
-        if (!cancelled) setSeason(data);
+    getHuilerieName(supabase, huilerieId)
+      .then((nom) => {
+        if (!cancelled && nom) setHuilerieNom(nom);
       })
       .catch(() => {
-        if (!cancelled) {
-          setSeasonError("Impossible de vérifier la saison active. Vérifiez votre connexion.");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setSeasonLoading(false);
+        // Non bloquant : le ticket affichera juste le nom par défaut.
       });
-
-    if (huilerieId) {
-      getHuilerieName(supabase, huilerieId)
-        .then((nom) => {
-          if (!cancelled && nom) setHuilerieNom(nom);
-        })
-        .catch(() => {
-          // Non bloquant : le ticket affichera juste le nom par défaut.
-        });
-    }
 
     return () => {
       cancelled = true;
@@ -210,18 +193,17 @@ export default function DepotNouveau() {
     );
   }
 
-  if (seasonError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA] p-4">
-        <p role="alert" className="text-center text-[#E63946]">
-          {seasonError}
-        </p>
-      </div>
-    );
-  }
-
   if (!season) {
     return <NoActiveSeasonMessage action="enregistrer un dépôt" />;
+  }
+
+  // Un dépôt ne peut être créé que sur la saison active — accéder à cette
+  // page en consultant une saison passée (URL directe, bouton masqué mais
+  // atteint autrement) renvoie vers la liste. Confort d'ergonomie : la
+  // vraie protection est le trigger enforce_saison_active_for_write côté
+  // base (migration 20260722100000_readonly_season_enforcement.sql).
+  if (isReadOnly) {
+    return <Navigate to="/depots" replace />;
   }
 
   // ---- Écran ticket (après validation) ----
@@ -288,54 +270,27 @@ export default function DepotNouveau() {
         <div className="min-h-[420px]">
         {step === 1 && (
           <section>
-            <label htmlFor="client-search" className="block text-sm font-medium text-gray-600 mb-2">
-              Rechercher un client
-            </label>
-            <input
-              id="client-search"
-              type="search"
-              value={clientSearch}
-              onChange={(event) => setClientSearch(event.target.value)}
-              placeholder="Nom ou téléphone"
-              className="w-full h-[52px] px-4 border-2 border-gray-200 rounded-xl focus:border-[#2D6A4F] focus:outline-none mb-3"
-            />
-
-            {selectedClient && (
-              <p className="mb-3 p-3 rounded-xl bg-green-50 border-2 border-[#2D6A4F] text-[#1B4332] font-semibold">
-                Client sélectionné : {selectedClient.nom_complet}
-              </p>
-            )}
-
-            {/* max-h + overflow : sans borne, une liste de résultats longue
-                pousse le bouton retour toujours plus bas, et une liste
-                courte le remonte — le bouton change de position à chaque
-                recherche/étape (voir le bug corrigé : un second tap au
-                même endroit après être revenu à l'étape 1 atterrissait
-                sur "+ Nouveau client" au lieu de "Quitter"). */}
-            <ul className="space-y-2 mb-4 max-h-64 overflow-y-auto">
-              {clientResults.map((client) => (
-                <li key={client.id}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedClient(client)}
-                    aria-pressed={selectedClient?.id === client.id}
-                    className={`w-full text-left min-h-[56px] p-3 rounded-xl border-2 ${
-                      selectedClient?.id === client.id
-                        ? "border-[#2D6A4F] bg-green-50"
-                        : "border-gray-200"
-                    }`}
-                  >
-                    <p className="font-semibold">{client.nom_complet}</p>
-                    <p className="text-sm text-gray-500">{client.telephone ?? "Pas de téléphone"}</p>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div className="mb-4">
+              <SearchableSelect
+                label="Client"
+                query={clientSearch}
+                onQueryChange={setClientSearch}
+                results={clientResults}
+                selected={selectedClient}
+                onSelect={setSelectedClient}
+                onClear={() => setSelectedClient(null)}
+                getId={(client) => client.id}
+                getLabel={(client) => client.nom_complet}
+                getSubLabel={(client) => client.telephone ?? "Pas de téléphone"}
+                placeholder="Nom ou téléphone"
+                emptyMessage="Aucun client trouvé"
+              />
+            </div>
 
             <button
               type="button"
               onClick={() => setClientFormOpen(true)}
-              className="w-full h-14 rounded-xl border-2 border-dashed border-gray-300 text-gray-600 font-semibold hover:border-[#2D6A4F] hover:text-[#2D6A4F]"
+              className="w-full h-14 rounded-xl border-2 border-dashed border-gray-300 text-gray-600 font-semibold hover:border-[#2D6A4F] hover:text-[#2D6A4F] transition-colors motion-reduce:transition-none"
             >
               + Nouveau client
             </button>

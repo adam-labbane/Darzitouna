@@ -7,43 +7,33 @@
 // src/lib/factureDocument.ts — cette page orchestre l'UI, même
 // architecture que Pressages.tsx/Stocks.tsx.
 import { useEffect, useState } from "react";
+import { Receipt } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { getHuilerieId } from "../lib/session";
-import { getActiveSeason } from "../lib/depots";
 import { getHuilerieName } from "../lib/huilerie";
 import { addReglement, getFactureById, getFactures } from "../lib/factures";
 import { buildFactureDocument } from "../lib/factureDocument";
 import { getStatutColor, getStatutLabel } from "../lib/factureCalculations";
 import type { Facture, FactureWithClient, FactureWithRelations } from "../types/facture";
-import type { Saison } from "../types/saison";
 import type { ModeReglement } from "../types/reglement";
+import { useSeasonConsultation } from "../hooks/useSeasonConsultation";
+import { usePagination } from "../hooks/usePagination";
 import FactureCreationModal from "../components/FactureCreationModal";
 import FacturePreview from "../components/FacturePreview";
 import ReglementModal from "../components/ReglementModal";
 import NoActiveSeasonMessage from "../components/NoActiveSeasonMessage";
+import Skeleton from "../components/Skeleton";
+import EmptyState from "../components/EmptyState";
+import Pagination from "../components/Pagination";
 
 export default function Factures() {
   const huilerieId = getHuilerieId();
+  const { consultedSaison: season, isReadOnly, loading: seasonLoading } = useSeasonConsultation();
 
-  const [season, setSeason] = useState<Saison | null>(null);
-  const [seasonLoading, setSeasonLoading] = useState(true);
-  const [seasonError, setSeasonError] = useState("");
   const [huilerieNom, setHuilerieNom] = useState("Huilerie");
 
   useEffect(() => {
     let cancelled = false;
-    getActiveSeason(supabase)
-      .then((data) => {
-        if (!cancelled) setSeason(data);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setSeasonError("Impossible de vérifier la saison active. Vérifiez votre connexion.");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setSeasonLoading(false);
-      });
 
     if (huilerieId) {
       getHuilerieName(supabase, huilerieId)
@@ -151,20 +141,12 @@ export default function Factures() {
     setReglementOpen(false);
   };
 
+  const { pageItems, currentPage, pageCount, goToPage } = usePagination(factures);
+
   if (seasonLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA]">
         <p className="text-gray-500">Chargement…</p>
-      </div>
-    );
-  }
-
-  if (seasonError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA] p-4">
-        <p role="alert" className="text-center text-[#E63946]">
-          {seasonError}
-        </p>
       </div>
     );
   }
@@ -179,14 +161,8 @@ export default function Factures() {
         <h1 className="text-xl font-bold text-[#1B4332]">Facturation — {season.nom}</h1>
       </header>
 
-      <main className="p-4">
-        {loading && (
-          <div className="space-y-3" aria-label="Chargement des factures">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-20 rounded-2xl bg-gray-200 animate-pulse" />
-            ))}
-          </div>
-        )}
+      <main className="p-4 max-w-3xl mx-auto">
+        {loading && <Skeleton count={3} label="Chargement des factures" />}
 
         {!loading && error && (
           <p role="alert" className="text-center text-[#E63946] mt-8">
@@ -195,14 +171,17 @@ export default function Factures() {
         )}
 
         {!loading && !error && factures.length === 0 && (
-          <p className="text-center text-gray-500 mt-8">
-            Aucune facture cette saison — générez la première depuis un pressage.
-          </p>
+          <EmptyState
+            icon={Receipt}
+            title="Aucune facture cette saison"
+            description={isReadOnly ? undefined : "Générez la première depuis un pressage."}
+          />
         )}
 
         {!loading && !error && factures.length > 0 && (
+          <>
           <ul className="space-y-3">
-            {factures.map((facture) => (
+            {pageItems.map((facture) => (
               <li key={facture.id}>
                 <button
                   type="button"
@@ -210,9 +189,9 @@ export default function Factures() {
                     setDetailLoading(true);
                     setSelectedFactureId(facture.id);
                   }}
-                  className="w-full text-left bg-white rounded-2xl shadow-sm p-4 hover:border-2 hover:border-[#2D6A4F]"
+                  className="w-full text-left bg-white rounded-2xl shadow-soft p-4 hover:border-2 hover:border-[#2D6A4F] transition-colors motion-reduce:transition-none"
                 >
-                  <div className="flex justify-between items-start mb-1">
+                  <div className="flex flex-wrap justify-between items-start gap-x-3 gap-y-1 mb-1">
                     <span className="font-mono font-bold text-[#1B4332]">{facture.numero_facture}</span>
                     <span className="text-sm text-gray-400">
                       {new Date(facture.created_at).toLocaleDateString("fr-FR")}
@@ -221,7 +200,7 @@ export default function Factures() {
                   <p className="font-semibold text-gray-900">
                     {facture.client?.nom_complet ?? "Client inconnu"}
                   </p>
-                  <div className="flex justify-between items-center mt-2 text-sm">
+                  <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 mt-2 text-sm">
                     <span className="font-mono text-gray-700">{facture.montant_ttc.toFixed(2)} DT</span>
                     {/* Le statut n'est jamais porté par la seule couleur :
                         le libellé texte accompagne toujours la pastille. */}
@@ -243,17 +222,21 @@ export default function Factures() {
               </li>
             ))}
           </ul>
+          <Pagination currentPage={currentPage} pageCount={pageCount} onPageChange={goToPage} />
+          </>
         )}
       </main>
 
-      <button
-        type="button"
-        onClick={() => setCreationOpen(true)}
-        aria-label="Nouvelle facture"
-        className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 flex items-center justify-center"
-      >
-        +
-      </button>
+      {!isReadOnly && (
+        <button
+          type="button"
+          onClick={() => setCreationOpen(true)}
+          aria-label="Nouvelle facture"
+          className="fixed bottom-24 md:bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 transition-transform motion-reduce:transition-none active:scale-95 flex items-center justify-center"
+        >
+          +
+        </button>
+      )}
 
       {creationOpen && (
         <FactureCreationModal
@@ -293,7 +276,7 @@ export default function Factures() {
             {!detailLoading && !detailError && selectedFacture && (
               <>
                 <FacturePreview facture={buildFactureDocument(selectedFacture, huilerieNom)} />
-                {selectedFacture.statut_paiement !== "PAYE" && (
+                {!isReadOnly && selectedFacture.statut_paiement !== "PAYE" && (
                   <div className="flex justify-center mt-4">
                     <button
                       type="button"

@@ -4,17 +4,20 @@
 // La logique métier (accès données, calculs d'affichage) est déléguée à
 // src/lib/cuves.ts et src/lib/cuveDisplay.ts — cette page orchestre l'UI.
 import { useEffect, useState } from "react";
+import { Warehouse } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { getCurrentUser, getHuilerieId } from "../lib/session";
 import { archiveCuve, correctCuveLevel, createCuve, getCuves, updateCuve } from "../lib/cuves";
-import { getActiveSeason } from "../lib/depots";
 import { formatLiters, TYPE_HUILE_LABELS } from "../lib/cuveDisplay";
 import type { Cuve } from "../types/cuve";
 import type { CuveFormInput } from "../lib/cuveSchema";
+import { useSeasonConsultation } from "../hooks/useSeasonConsultation";
 import TankCanvas from "../components/TankCanvas";
 import CuveFormModal from "../components/CuveFormModal";
 import CuveCorrectionModal from "../components/CuveCorrectionModal";
 import ConfirmDialog from "../components/ConfirmDialog";
+import Skeleton from "../components/Skeleton";
+import EmptyState from "../components/EmptyState";
 
 export default function Stocks() {
   const huilerieId = getHuilerieId();
@@ -25,11 +28,17 @@ export default function Stocks() {
   // pas un appel API direct, seule la base le fait.
   const isGerant = currentUser?.role === "GERANT";
 
+  // Les cuves sont un actif permanent, pas une donnée de saison : elles
+  // s'affichent identiquement quelle que soit la saison consultée. Seule
+  // la correction de niveau écrit un mouvement de stock daté d'une
+  // saison — elle cible donc toujours activeSaison (jamais la saison
+  // consultée) et disparaît en mode lecture seule, comme les autres
+  // actions d'écriture de saison (dépôt, pressage, facture, règlement).
+  const { activeSaison, isReadOnly } = useSeasonConsultation();
+
   const [cuves, setCuves] = useState<Cuve[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,15 +54,6 @@ export default function Stocks() {
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
-      });
-
-    getActiveSeason(supabase)
-      .then((saison) => {
-        if (!cancelled) setActiveSeasonId(saison?.id ?? null);
-      })
-      .catch(() => {
-        // Non bloquant pour l'affichage du canvas : seule la correction
-        // de niveau a besoin d'une saison active.
       });
 
     return () => {
@@ -101,10 +101,10 @@ export default function Stocks() {
   };
 
   const handleCorrectionSubmit = async (data: { newLevel: number; raison: string }) => {
-    if (!correctionTarget || !activeSeasonId) return;
+    if (!correctionTarget || !activeSaison) return;
     await correctCuveLevel(supabase, {
       cuveId: correctionTarget.id,
-      saisonId: activeSeasonId,
+      saisonId: activeSaison.id,
       currentLevel: correctionTarget.niveau_actuel,
       newLevel: data.newLevel,
       raison: data.raison,
@@ -131,12 +131,8 @@ export default function Stocks() {
         <h1 className="text-xl font-bold text-[#1B4332]">Stocks — cuves</h1>
       </header>
 
-      <main className="p-4 space-y-6">
-        {loading && (
-          <div className="bg-white rounded-2xl shadow-sm p-8 text-center text-gray-400">
-            Chargement…
-          </div>
-        )}
+      <main className="p-4 space-y-6 max-w-4xl mx-auto">
+        {loading && <Skeleton count={1} className="h-40" label="Chargement des cuves" />}
 
         {!loading && error && (
           <p role="alert" className="text-center text-[#E63946] mt-8">
@@ -148,49 +144,49 @@ export default function Stocks() {
           <>
             <TankCanvas cuves={cuves} />
 
-            {!activeSeasonId && (
+            {!isReadOnly && !activeSaison && (
               <p className="text-sm text-gray-500 text-center">
                 Aucune saison active — la correction manuelle de niveau est indisponible tant
                 qu'une saison n'est pas ouverte.
               </p>
             )}
 
-            <div className="bg-white rounded-2xl shadow-sm divide-y divide-gray-100">
-              {cuves.length === 0 && (
-                <p className="p-6 text-center text-gray-500">Aucune cuve — créez la première.</p>
-              )}
-              {cuves.map((cuve) => (
-                <div key={cuve.id} className="p-4 flex items-center gap-4 flex-wrap">
-                  <div className="flex-1 min-w-[160px]">
-                    <p className="font-semibold text-gray-900">{cuve.nom_reference}</p>
-                    <p className="text-sm text-gray-500">
-                      {TYPE_HUILE_LABELS[cuve.type_huile]}
-                      {cuve.emplacement ? ` — ${cuve.emplacement}` : ""}
-                    </p>
-                    <p className="text-sm text-gray-700 font-mono">
-                      {formatLiters(cuve.niveau_actuel)} / {formatLiters(cuve.capacite_max)}
-                    </p>
-                  </div>
+            {cuves.length === 0 ? (
+              <EmptyState icon={Warehouse} title="Aucune cuve" description="Créez la première avec le bouton +." />
+            ) : (
+              <div className="bg-white rounded-2xl shadow-soft divide-y divide-gray-100">
+                {cuves.map((cuve) => (
+                  <div key={cuve.id} className="p-4 flex items-center gap-4 flex-wrap">
+                    <div className="flex-1 min-w-[160px]">
+                      <p className="font-semibold text-gray-900">{cuve.nom_reference}</p>
+                      <p className="text-sm text-gray-500">
+                        {TYPE_HUILE_LABELS[cuve.type_huile]}
+                        {cuve.emplacement ? ` — ${cuve.emplacement}` : ""}
+                      </p>
+                      <p className="text-sm text-gray-700 font-mono">
+                        {formatLiters(cuve.niveau_actuel)} / {formatLiters(cuve.capacite_max)}
+                      </p>
+                    </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEdit(cuve)}
-                    className="min-h-[48px] px-4 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50"
-                  >
-                    Modifier
-                  </button>
-
-                  {isGerant && (
                     <button
                       type="button"
-                      onClick={() => setCorrectionTarget(cuve)}
-                      disabled={!activeSeasonId}
-                      aria-label={`Corriger le niveau de ${cuve.nom_reference}`}
-                      className="min-h-[48px] px-4 rounded-xl border-2 border-[#2D6A4F] text-[#2D6A4F] font-semibold hover:bg-green-50 disabled:opacity-40 disabled:pointer-events-none"
+                      onClick={() => handleOpenEdit(cuve)}
+                      className="min-h-[48px] px-4 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors motion-reduce:transition-none"
                     >
-                      Corriger le niveau
+                      Modifier
                     </button>
-                  )}
+
+                    {isGerant && !isReadOnly && (
+                      <button
+                        type="button"
+                        onClick={() => setCorrectionTarget(cuve)}
+                        disabled={!activeSaison}
+                        aria-label={`Corriger le niveau de ${cuve.nom_reference}`}
+                        className="min-h-[48px] px-4 rounded-xl border-2 border-[#2D6A4F] text-[#2D6A4F] font-semibold hover:bg-green-50 disabled:opacity-40 disabled:pointer-events-none transition-colors motion-reduce:transition-none"
+                      >
+                        Corriger le niveau
+                      </button>
+                    )}
 
                   {isGerant && (
                     <button
@@ -208,9 +204,10 @@ export default function Stocks() {
                       Archiver
                     </button>
                   )}
-                </div>
-              ))}
-            </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </>
         )}
       </main>
@@ -219,7 +216,7 @@ export default function Stocks() {
         type="button"
         onClick={handleOpenCreate}
         aria-label="Nouvelle cuve"
-        className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 flex items-center justify-center"
+        className="fixed bottom-24 md:bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 transition-transform motion-reduce:transition-none active:scale-95 flex items-center justify-center"
       >
         +
       </button>

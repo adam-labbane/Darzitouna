@@ -18,6 +18,7 @@ import { getPressagesNonFactures, createFacture, type PressageNonFacture } from 
 import { factureSchema } from "../lib/factureSchema";
 import type { Client } from "../types/client";
 import type { Facture } from "../types/facture";
+import SearchableSelect from "./SearchableSelect";
 
 interface FactureCreationModalProps {
   client: SupabaseClient;
@@ -90,6 +91,12 @@ export default function FactureCreationModal({ client, onCreated, onClose }: Fac
     setPressagesLoading(true);
   };
 
+  const handleClearClient = () => {
+    setSelectedClient(null);
+    setSelectedPressageId("");
+    setFormError("");
+  };
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setFormError("");
@@ -131,44 +138,22 @@ export default function FactureCreationModal({ client, onCreated, onClose }: Fac
         </h2>
 
         <form onSubmit={handleSubmit} noValidate>
-          <label htmlFor="facture-client-search" className="block text-sm font-medium text-gray-600 mb-2">
-            Client
-          </label>
-          <input
-            id="facture-client-search"
-            type="search"
-            value={clientSearch}
-            onChange={(event) => {
-              setClientSearch(event.target.value);
-              setSelectedClient(null);
-              setSelectedPressageId("");
-            }}
-            placeholder="Rechercher un client"
-            className="w-full h-[52px] px-4 border-2 border-gray-200 rounded-xl focus:border-[#2D6A4F] focus:outline-none mb-3"
-          />
-
-          {selectedClient && (
-            <p className="mb-3 p-3 rounded-xl bg-green-50 border-2 border-[#2D6A4F] text-[#1B4332] font-semibold">
-              Client sélectionné : {selectedClient.nom_complet}
-            </p>
-          )}
-
-          {!selectedClient && clientResults.length > 0 && (
-            <ul className="space-y-2 mb-4 max-h-48 overflow-y-auto">
-              {clientResults.map((candidate) => (
-                <li key={candidate.id}>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectClient(candidate)}
-                    className="w-full text-left min-h-[56px] p-3 rounded-xl border-2 border-gray-200 hover:border-[#2D6A4F]"
-                  >
-                    <p className="font-semibold">{candidate.nom_complet}</p>
-                    <p className="text-sm text-gray-500">{candidate.telephone ?? "Pas de téléphone"}</p>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          <div className="mb-4">
+            <SearchableSelect
+              label="Client"
+              query={clientSearch}
+              onQueryChange={setClientSearch}
+              results={clientResults}
+              selected={selectedClient}
+              onSelect={handleSelectClient}
+              onClear={handleClearClient}
+              getId={(candidate) => candidate.id}
+              getLabel={(candidate) => candidate.nom_complet}
+              getSubLabel={(candidate) => candidate.telephone ?? "Pas de téléphone"}
+              placeholder="Rechercher un client"
+              emptyMessage="Aucun client trouvé"
+            />
+          </div>
 
           {selectedClient && (
             <div className="mb-4">

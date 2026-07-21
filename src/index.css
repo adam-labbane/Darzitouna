@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+/* Jetons de design partagés — utilisés par les nouveaux composants
+   communs de ce chantier (sélecteur de saison, bandeau lecture seule,
+   navigation mobile, sélecteur avec recherche, pagination, toast,
+   squelettes). Les pages déjà écrites gardent leurs hex littéraux
+   (#2D6A4F/#1B4332/#E63946/#F59E0B, mêmes valeurs) : on ne les
+   remplace pas en masse (risque de régression visuelle disproportionné
+   pour un simple renommage), seulement là où une page est de toute
+   façon retouchée pour la responsive. */
+@theme {
+  --color-brand: #2d6a4f;
+  --color-brand-dark: #1b4332;
+  --color-brand-tint: #eaf4ee;
+  --color-danger: #e63946;
+  --color-warning: #f59e0b;
+  --shadow-soft: 0 2px 10px rgba(27, 67, 50, 0.07);
+}
+
 /* Animation d'erreur du pavé PIN : 3 oscillations horizontales sur ~300ms */
 @keyframes shake {
   0%,

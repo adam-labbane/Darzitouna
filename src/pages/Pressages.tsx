@@ -6,40 +6,23 @@
 // src/lib/pressageCalculations.ts — cette page orchestre l'UI, même
 // architecture que Stocks.tsx/DepotsList.tsx.
 import { useEffect, useState } from "react";
+import { Factory, Truck } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import { getActiveSeason } from "../lib/depots";
 import { getCuves } from "../lib/cuves";
 import { createPressage, getDepotsEnAttente, getPressages } from "../lib/pressages";
 import type { DepotEnAttente, PressageWithDepot } from "../lib/pressages";
-import type { Saison } from "../types/saison";
 import type { Cuve, TypeHuile } from "../types/cuve";
 import { getRendementColor, RENDEMENT_COLOR_HEX } from "../lib/pressageCalculations";
+import { useSeasonConsultation } from "../hooks/useSeasonConsultation";
+import { usePagination } from "../hooks/usePagination";
 import PressageModal from "../components/PressageModal";
 import NoActiveSeasonMessage from "../components/NoActiveSeasonMessage";
+import Skeleton from "../components/Skeleton";
+import EmptyState from "../components/EmptyState";
+import Pagination from "../components/Pagination";
 
 export default function Pressages() {
-  const [season, setSeason] = useState<Saison | null>(null);
-  const [seasonLoading, setSeasonLoading] = useState(true);
-  const [seasonError, setSeasonError] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-    getActiveSeason(supabase)
-      .then((data) => {
-        if (!cancelled) setSeason(data);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setSeasonError("Impossible de vérifier la saison active. Vérifiez votre connexion.");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setSeasonLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { consultedSaison: season, isReadOnly, loading: seasonLoading } = useSeasonConsultation();
 
   const [depotsEnAttente, setDepotsEnAttente] = useState<DepotEnAttente[]>([]);
   const [pressages, setPressages] = useState<PressageWithDepot[]>([]);
@@ -118,20 +101,12 @@ export default function Pressages() {
     await refreshData(season.id);
   };
 
+  const { pageItems: pressagePageItems, currentPage, pageCount, goToPage } = usePagination(pressages);
+
   if (seasonLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA]">
         <p className="text-gray-500">Chargement…</p>
-      </div>
-    );
-  }
-
-  if (seasonError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA] p-4">
-        <p role="alert" className="text-center text-[#E63946]">
-          {seasonError}
-        </p>
       </div>
     );
   }
@@ -146,14 +121,8 @@ export default function Pressages() {
         <h1 className="text-xl font-bold text-[#1B4332]">Pressage — {season.nom}</h1>
       </header>
 
-      <main className="p-4 space-y-6">
-        {loading && (
-          <div className="space-y-3" aria-label="Chargement des pressages">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-20 rounded-2xl bg-gray-200 animate-pulse" />
-            ))}
-          </div>
-        )}
+      <main className="p-4 space-y-6 max-w-3xl mx-auto">
+        {loading && <Skeleton count={3} label="Chargement des pressages" />}
 
         {!loading && error && (
           <p role="alert" className="text-center text-[#E63946] mt-8">
@@ -168,15 +137,13 @@ export default function Pressages() {
                 Dépôts en attente de pressage ({depotsEnAttente.length})
               </h2>
               {depotsEnAttente.length === 0 && (
-                <p className="text-center text-gray-500 bg-white rounded-2xl shadow-sm p-6">
-                  Aucun dépôt en attente.
-                </p>
+                <EmptyState icon={Truck} title="Aucun dépôt en attente" />
               )}
               {depotsEnAttente.length > 0 && (
                 <ul className="space-y-3">
                   {depotsEnAttente.map((depot) => (
-                    <li key={depot.id} className="bg-white rounded-2xl shadow-sm p-4">
-                      <div className="flex justify-between items-start mb-1">
+                    <li key={depot.id} className="bg-white rounded-2xl shadow-soft p-4">
+                      <div className="flex flex-wrap justify-between items-start gap-x-3 gap-y-1 mb-1">
                         <span className="font-mono font-bold text-[#1B4332]">
                           {depot.numero_ticket}
                         </span>
@@ -187,18 +154,20 @@ export default function Pressages() {
                       <p className="font-semibold text-gray-900">
                         {depot.client?.nom_complet ?? "Client inconnu"}
                       </p>
-                      <div className="flex justify-between items-center mt-2">
+                      <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-2 mt-2">
                         <span className="text-sm text-gray-600">
                           {depot.poids_olives_kg.toFixed(2)} kg —{" "}
                           {depot.is_achat_olives ? "Achat direct" : "Prestation"}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedDepot(depot)}
-                          className="min-h-[48px] px-4 rounded-xl font-semibold text-white bg-[#2D6A4F] hover:bg-green-800"
-                        >
-                          Presser
-                        </button>
+                        {!isReadOnly && (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDepot(depot)}
+                            className="min-h-[48px] px-4 rounded-xl font-semibold text-white bg-[#2D6A4F] hover:bg-green-800 transition-colors motion-reduce:transition-none"
+                          >
+                            Presser
+                          </button>
+                        )}
                       </div>
                     </li>
                   ))}
@@ -211,20 +180,19 @@ export default function Pressages() {
                 Pressages réalisés ({pressages.length})
               </h2>
               {pressages.length === 0 && (
-                <p className="text-center text-gray-500 bg-white rounded-2xl shadow-sm p-6">
-                  Aucun pressage réalisé cette saison.
-                </p>
+                <EmptyState icon={Factory} title="Aucun pressage réalisé cette saison" />
               )}
               {pressages.length > 0 && (
+                <>
                 <ul className="space-y-3">
-                  {pressages.map((pressage) => {
+                  {pressagePageItems.map((pressage) => {
                     const color =
                       pressage.rendement_final !== null
                         ? getRendementColor(pressage.rendement_final)
                         : null;
                     return (
-                      <li key={pressage.id} className="bg-white rounded-2xl shadow-sm p-4">
-                        <div className="flex justify-between items-start mb-1">
+                      <li key={pressage.id} className="bg-white rounded-2xl shadow-soft p-4">
+                        <div className="flex flex-wrap justify-between items-start gap-x-3 gap-y-1 mb-1">
                           <span className="font-mono font-bold text-[#1B4332]">
                             {pressage.depot?.numero_ticket ?? "—"}
                           </span>
@@ -237,7 +205,7 @@ export default function Pressages() {
                         <p className="font-semibold text-gray-900">
                           {pressage.depot?.client?.nom_complet ?? "Client inconnu"}
                         </p>
-                        <div className="flex justify-between items-center mt-2 text-sm">
+                        <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 mt-2 text-sm">
                           <span className="font-mono text-gray-700">
                             {pressage.quantite_huile_kg?.toFixed(2) ?? "—"} kg d'huile
                           </span>
@@ -260,6 +228,8 @@ export default function Pressages() {
                     );
                   })}
                 </ul>
+                <Pagination currentPage={currentPage} pageCount={pageCount} onPageChange={goToPage} />
+                </>
               )}
             </section>
           </>

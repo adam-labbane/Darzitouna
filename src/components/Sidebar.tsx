@@ -27,7 +27,7 @@ export default function Sidebar({ role }: SidebarProps) {
   return (
     <nav
       aria-label="Navigation principale"
-      className={`bg-white border-r border-gray-100 flex flex-col shrink-0 transition-all duration-150 ${
+      className={`hidden md:flex bg-white border-r border-gray-100 flex-col shrink-0 transition-all duration-150 motion-reduce:transition-none ${
         collapsed ? "w-20" : "w-64"
       }`}
     >

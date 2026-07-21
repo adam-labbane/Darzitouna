@@ -9,25 +9,30 @@
 // /clients/:id.
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
+import { Truck, Factory, Receipt, Wallet } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { getCurrentUser } from "../lib/session";
-import { getActiveSeason } from "../lib/depots";
 import { getClientProfile, type ClientProfileData, type ClientProfileFacture } from "../lib/clientProfile";
 import { computeClientTotals } from "../lib/clientProfileCalculations";
 import { getStatutColor, getStatutLabel } from "../lib/factureCalculations";
 import { getRendementColor, RENDEMENT_COLOR_HEX } from "../lib/pressageCalculations";
 import { addReglement } from "../lib/factures";
 import { archiveClient, updateClient } from "../lib/clients";
-import type { Saison } from "../types/saison";
 import type { StatutPaiement } from "../types/depot";
 import type { ModeReglement } from "../types/reglement";
 import type { ClientFormInput } from "../lib/clientSchema";
+import { useSeasonConsultation } from "../hooks/useSeasonConsultation";
 import ClientFormModal from "../components/ClientFormModal";
 import ReglementModal from "../components/ReglementModal";
 import ConfirmDialog from "../components/ConfirmDialog";
+import EmptyState from "../components/EmptyState";
 
 type Tab = "depots" | "pressages" | "factures" | "reglements";
-type Scope = "active" | "all";
+// "saison" = la saison consultée via le sélecteur global (contexte
+// partagé) ; "all" reste une extension propre à cette fiche (aucun autre
+// écran n'agrège plusieurs saisons à la fois), pas fusionnée dans le
+// sélecteur global.
+type Scope = "saison" | "all";
 
 const TAB_LABELS: Record<Tab, string> = {
   depots: "Dépôts",
@@ -56,7 +61,7 @@ const MODE_LABELS: Record<ModeReglement, string> = {
 
 function StatBlock({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-4">
+    <div className="bg-white rounded-2xl shadow-soft p-4">
       <p className="text-xs uppercase tracking-widest text-gray-400 mb-1">{label}</p>
       <p className="text-xl font-mono font-bold text-gray-900">{value}</p>
     </div>
@@ -68,33 +73,15 @@ export default function ClientProfil() {
   const navigate = useNavigate();
   const isGerant = getCurrentUser()?.role === "GERANT";
 
-  // Périmètre : saison active par défaut, bascule possible vers tout
-  // l'historique. On attend la résolution de la saison active avant le
-  // premier chargement de la fiche, pour ne jamais afficher "historique
-  // complet" par erreur pendant une fraction de seconde en scope "active".
-  const [activeSaison, setActiveSaison] = useState<Saison | null>(null);
-  const [seasonLoading, setSeasonLoading] = useState(true);
-  const [scope, setScope] = useState<Scope>("active");
+  // Périmètre : la saison consultée (sélecteur global, contexte partagé)
+  // par défaut, bascule possible vers tout l'historique. On attend la
+  // résolution de la saison consultée avant le premier chargement de la
+  // fiche, pour ne jamais afficher "historique complet" par erreur
+  // pendant une fraction de seconde en scope "saison".
+  const { consultedSaison, isReadOnly, loading: seasonLoading } = useSeasonConsultation();
+  const [scope, setScope] = useState<Scope>("saison");
 
-  useEffect(() => {
-    let cancelled = false;
-    getActiveSeason(supabase)
-      .then((saison) => {
-        if (!cancelled) setActiveSaison(saison);
-      })
-      .catch(() => {
-        // Non bloquant : sans saison active, la bascule "active" se
-        // comporte comme "tout l'historique" (aucun filtre à appliquer).
-      })
-      .finally(() => {
-        if (!cancelled) setSeasonLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const saisonIdPourFiltre = scope === "active" && activeSaison ? activeSaison.id : undefined;
+  const saisonIdPourFiltre = scope === "saison" && consultedSaison ? consultedSaison.id : undefined;
 
   const [profile, setProfile] = useState<ClientProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -180,10 +167,10 @@ export default function ClientProfil() {
   if (seasonLoading || loading) {
     return (
       <div className="min-h-screen bg-[#F7F8FA] p-4">
-        <div className="space-y-3 max-w-3xl mx-auto" aria-label="Chargement de la fiche client">
-          <div className="h-24 rounded-2xl bg-gray-200 animate-pulse" />
-          <div className="h-32 rounded-2xl bg-gray-200 animate-pulse" />
-          <div className="h-64 rounded-2xl bg-gray-200 animate-pulse" />
+        <div className="space-y-3 max-w-3xl mx-auto" role="status" aria-label="Chargement de la fiche client">
+          <div className="h-24 rounded-2xl bg-gray-200 animate-pulse motion-reduce:animate-none" aria-hidden="true" />
+          <div className="h-32 rounded-2xl bg-gray-200 animate-pulse motion-reduce:animate-none" aria-hidden="true" />
+          <div className="h-64 rounded-2xl bg-gray-200 animate-pulse motion-reduce:animate-none" aria-hidden="true" />
         </div>
       </div>
     );
@@ -277,27 +264,27 @@ export default function ClientProfil() {
       </header>
 
       <main className="p-4 max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <p className="text-sm text-gray-500" aria-live="polite">
-            Période : {scope === "active" ? (activeSaison ? activeSaison.nom : "aucune saison active") : "tout l'historique"}
+            Période : {scope === "saison" ? (consultedSaison ? consultedSaison.nom : "aucune saison") : "tout l'historique"}
           </p>
           <div className="flex gap-1 bg-white rounded-xl p-1 border border-gray-200">
             <button
               type="button"
-              onClick={() => handleScopeChange("active")}
-              aria-pressed={scope === "active"}
-              className={`min-h-[40px] px-3 rounded-lg text-sm font-semibold ${
-                scope === "active" ? "bg-green-50 text-[#2D6A4F]" : "text-gray-500"
+              onClick={() => handleScopeChange("saison")}
+              aria-pressed={scope === "saison"}
+              className={`min-h-[40px] px-3 rounded-lg text-sm font-semibold transition-colors motion-reduce:transition-none ${
+                scope === "saison" ? "bg-brand-tint text-brand-dark" : "text-gray-500"
               }`}
             >
-              Saison active
+              {consultedSaison ? consultedSaison.nom : "Saison"}
             </button>
             <button
               type="button"
               onClick={() => handleScopeChange("all")}
               aria-pressed={scope === "all"}
-              className={`min-h-[40px] px-3 rounded-lg text-sm font-semibold ${
-                scope === "all" ? "bg-green-50 text-[#2D6A4F]" : "text-gray-500"
+              className={`min-h-[40px] px-3 rounded-lg text-sm font-semibold transition-colors motion-reduce:transition-none ${
+                scope === "all" ? "bg-brand-tint text-brand-dark" : "text-gray-500"
               }`}
             >
               Tout l'historique
@@ -335,14 +322,15 @@ export default function ClientProfil() {
         {tab === "depots" && (
           <section role="tabpanel" aria-label="Dépôts">
             {profile.depots.length === 0 ? (
-              <p className="text-center text-gray-500 bg-white rounded-2xl shadow-sm p-6">
-                Aucun dépôt {scope === "active" ? "cette saison" : ""}.
-              </p>
+              <EmptyState
+                icon={Truck}
+                title={`Aucun dépôt${scope === "saison" ? " cette saison" : ""}`}
+              />
             ) : (
               <ul className="space-y-3">
                 {profile.depots.map((depot) => (
-                  <li key={depot.id} className="bg-white rounded-2xl shadow-sm p-4">
-                    <div className="flex justify-between items-start mb-1">
+                  <li key={depot.id} className="bg-white rounded-2xl shadow-soft p-4">
+                    <div className="flex flex-wrap justify-between items-start gap-x-3 gap-y-1 mb-1">
                       <span className="font-mono font-bold text-[#1B4332]">{depot.numero_ticket}</span>
                       <span className="text-sm text-gray-400">
                         {new Date(depot.date_depot).toLocaleDateString("fr-FR")}
@@ -369,17 +357,18 @@ export default function ClientProfil() {
         {tab === "pressages" && (
           <section role="tabpanel" aria-label="Pressages">
             {profile.pressages.length === 0 ? (
-              <p className="text-center text-gray-500 bg-white rounded-2xl shadow-sm p-6">
-                Aucun pressage {scope === "active" ? "cette saison" : ""}.
-              </p>
+              <EmptyState
+                icon={Factory}
+                title={`Aucun pressage${scope === "saison" ? " cette saison" : ""}`}
+              />
             ) : (
               <ul className="space-y-3">
                 {profile.pressages.map((pressage) => {
                   const rendementColor =
                     pressage.rendement_final !== null ? getRendementColor(pressage.rendement_final) : null;
                   return (
-                    <li key={pressage.id} className="bg-white rounded-2xl shadow-sm p-4">
-                      <div className="flex justify-between items-start mb-1">
+                    <li key={pressage.id} className="bg-white rounded-2xl shadow-soft p-4">
+                      <div className="flex flex-wrap justify-between items-start gap-x-3 gap-y-1 mb-1">
                         <span className="font-mono font-bold text-[#1B4332]">
                           {pressage.depot?.numero_ticket ?? "—"}
                         </span>
@@ -417,20 +406,21 @@ export default function ClientProfil() {
         {tab === "factures" && (
           <section role="tabpanel" aria-label="Factures">
             {profile.factures.length === 0 ? (
-              <p className="text-center text-gray-500 bg-white rounded-2xl shadow-sm p-6">
-                Aucune facture {scope === "active" ? "cette saison" : ""}.
-              </p>
+              <EmptyState
+                icon={Receipt}
+                title={`Aucune facture${scope === "saison" ? " cette saison" : ""}`}
+              />
             ) : (
               <ul className="space-y-3">
                 {profile.factures.map((facture) => (
-                  <li key={facture.id} className="bg-white rounded-2xl shadow-sm p-4">
-                    <div className="flex justify-between items-start mb-1">
+                  <li key={facture.id} className="bg-white rounded-2xl shadow-soft p-4">
+                    <div className="flex flex-wrap justify-between items-start gap-x-3 gap-y-1 mb-1">
                       <span className="font-mono font-bold text-[#1B4332]">{facture.numero_facture}</span>
                       <span className="text-sm text-gray-400">
                         {new Date(facture.created_at).toLocaleDateString("fr-FR")}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1">
                       <span className="font-mono text-gray-700">{facture.montant_ttc.toFixed(2)} DT</span>
                       <span className="flex items-center gap-2" role="status">
                         <span
@@ -443,11 +433,11 @@ export default function ClientProfil() {
                         </span>
                       </span>
                     </div>
-                    {facture.statut_paiement !== "PAYE" && (
+                    {!isReadOnly && facture.statut_paiement !== "PAYE" && (
                       <button
                         type="button"
                         onClick={() => setReglementTarget(facture)}
-                        className="mt-3 min-h-[48px] px-4 rounded-xl font-semibold text-white bg-[#2D6A4F] hover:bg-green-800 w-full sm:w-auto"
+                        className="mt-3 min-h-[48px] px-4 rounded-xl font-semibold text-white bg-[#2D6A4F] hover:bg-green-800 transition-colors motion-reduce:transition-none w-full sm:w-auto"
                       >
                         Enregistrer un règlement
                       </button>
@@ -462,13 +452,14 @@ export default function ClientProfil() {
         {tab === "reglements" && (
           <section role="tabpanel" aria-label="Règlements">
             {reglementsAplatis.length === 0 ? (
-              <p className="text-center text-gray-500 bg-white rounded-2xl shadow-sm p-6">
-                Aucun règlement {scope === "active" ? "cette saison" : ""}.
-              </p>
+              <EmptyState
+                icon={Wallet}
+                title={`Aucun règlement${scope === "saison" ? " cette saison" : ""}`}
+              />
             ) : (
               <ul className="space-y-3">
                 {reglementsAplatis.map((reglement) => (
-                  <li key={reglement.id} className="bg-white rounded-2xl shadow-sm p-4 flex justify-between items-center">
+                  <li key={reglement.id} className="bg-white rounded-2xl shadow-soft p-4 flex flex-wrap justify-between items-center gap-x-3 gap-y-1">
                     <div>
                       <p className="font-semibold text-gray-900">{MODE_LABELS[reglement.mode]}</p>
                       <p className="text-sm text-gray-500">

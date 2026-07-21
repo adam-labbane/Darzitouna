@@ -5,12 +5,17 @@
 // architecture que ClientsList.tsx (lib/depots.ts porte la logique).
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { Truck } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import { getDepots, getActiveSeason } from "../lib/depots";
+import { getDepots } from "../lib/depots";
 import type { DepotWithClient, StatutPaiement } from "../types/depot";
-import type { Saison } from "../types/saison";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useSeasonConsultation } from "../hooks/useSeasonConsultation";
+import { usePagination } from "../hooks/usePagination";
 import NoActiveSeasonMessage from "../components/NoActiveSeasonMessage";
+import Skeleton from "../components/Skeleton";
+import EmptyState from "../components/EmptyState";
+import Pagination from "../components/Pagination";
 
 const STATUT_LABELS: Record<StatutPaiement, string> = {
   NON_PAYE: "Non payé",
@@ -26,29 +31,7 @@ const STATUT_COLORS: Record<StatutPaiement, string> = {
 
 export default function DepotsList() {
   const navigate = useNavigate();
-
-  const [season, setSeason] = useState<Saison | null>(null);
-  const [seasonLoading, setSeasonLoading] = useState(true);
-  const [seasonError, setSeasonError] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-    getActiveSeason(supabase)
-      .then((data) => {
-        if (!cancelled) setSeason(data);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setSeasonError("Impossible de vérifier la saison active. Vérifiez votre connexion.");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setSeasonLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { consultedSaison, isReadOnly, loading: seasonLoading } = useSeasonConsultation();
 
   const [depots, setDepots] = useState<DepotWithClient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,9 +46,9 @@ export default function DepotsList() {
   // (un setState synchrone y est normal, contrairement à l'intérieur d'un
   // effect — cf. la même correction déjà appliquée dans ClientsList.tsx).
   useEffect(() => {
-    if (!season) return;
+    if (!consultedSaison) return;
     let cancelled = false;
-    getDepots(supabase, season.id, {
+    getDepots(supabase, consultedSaison.id, {
       search: debouncedSearch,
       statutPaiement: statutFilter || undefined,
     })
@@ -84,7 +67,9 @@ export default function DepotsList() {
     return () => {
       cancelled = true;
     };
-  }, [season, debouncedSearch, statutFilter]);
+  }, [consultedSaison, debouncedSearch, statutFilter]);
+
+  const { pageItems, currentPage, pageCount, goToPage } = usePagination(depots);
 
   if (seasonLoading) {
     return (
@@ -94,24 +79,14 @@ export default function DepotsList() {
     );
   }
 
-  if (seasonError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA] p-4">
-        <p role="alert" className="text-center text-[#E63946]">
-          {seasonError}
-        </p>
-      </div>
-    );
-  }
-
-  if (!season) {
+  if (!consultedSaison) {
     return <NoActiveSeasonMessage action="enregistrer un dépôt" />;
   }
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] pb-24">
       <header className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10">
-        <h1 className="text-xl font-bold text-[#1B4332] mb-3">Dépôts — {season.nom}</h1>
+        <h1 className="text-xl font-bold text-[#1B4332] mb-3">Dépôts — {consultedSaison.nom}</h1>
         <input
           type="search"
           value={searchInput}
@@ -142,14 +117,8 @@ export default function DepotsList() {
         </select>
       </header>
 
-      <main className="p-4">
-        {loading && (
-          <div className="space-y-3" aria-label="Chargement des dépôts">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-20 rounded-2xl bg-gray-200 animate-pulse" />
-            ))}
-          </div>
-        )}
+      <main className="p-4 max-w-3xl mx-auto">
+        {loading && <Skeleton count={3} label="Chargement des dépôts" />}
 
         {!loading && error && (
           <p role="alert" className="text-center text-[#E63946] mt-8">
@@ -158,51 +127,66 @@ export default function DepotsList() {
         )}
 
         {!loading && !error && depots.length === 0 && (
-          <p className="text-center text-gray-500 mt-8">
-            {searchInput || statutFilter
-              ? "Aucun dépôt ne correspond à ces critères."
-              : "Aucun dépôt cette saison — créez le premier."}
-          </p>
+          <EmptyState
+            icon={Truck}
+            title={
+              searchInput || statutFilter
+                ? "Aucun dépôt ne correspond à ces critères."
+                : "Aucun dépôt cette saison"
+            }
+            description={
+              searchInput || statutFilter
+                ? undefined
+                : isReadOnly
+                  ? undefined
+                  : "Créez le premier avec le bouton +."
+            }
+          />
         )}
 
         {!loading && !error && depots.length > 0 && (
-          <ul className="space-y-3">
-            {depots.map((depot) => (
-              <li key={depot.id} className="bg-white rounded-2xl shadow-sm p-4">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="font-mono font-bold text-[#1B4332]">{depot.numero_ticket}</span>
-                  <span className="text-sm text-gray-400">
-                    {new Date(depot.date_depot).toLocaleDateString("fr-FR")}
-                  </span>
-                </div>
-                <p className="font-semibold text-gray-900">
-                  {depot.client?.nom_complet ?? "Client inconnu"}
-                </p>
-                <div className="flex justify-between items-center mt-2 text-sm">
-                  <span className="text-gray-600">
-                    {depot.poids_olives_kg.toFixed(2)} kg —{" "}
-                    {depot.is_achat_olives ? "Achat direct" : "Prestation"}
-                  </span>
-                  {depot.is_achat_olives && (
-                    <span className={`font-semibold ${STATUT_COLORS[depot.statut_paiement_achat]}`}>
-                      {STATUT_LABELS[depot.statut_paiement_achat]}
+          <>
+            <ul className="space-y-3">
+              {pageItems.map((depot) => (
+                <li key={depot.id} className="bg-white rounded-2xl shadow-soft p-4">
+                  <div className="flex flex-wrap justify-between items-start gap-x-3 gap-y-1 mb-1">
+                    <span className="font-mono font-bold text-[#1B4332]">{depot.numero_ticket}</span>
+                    <span className="text-sm text-gray-400">
+                      {new Date(depot.date_depot).toLocaleDateString("fr-FR")}
                     </span>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
+                  </div>
+                  <p className="font-semibold text-gray-900">
+                    {depot.client?.nom_complet ?? "Client inconnu"}
+                  </p>
+                  <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 mt-2 text-sm">
+                    <span className="text-gray-600">
+                      {depot.poids_olives_kg.toFixed(2)} kg —{" "}
+                      {depot.is_achat_olives ? "Achat direct" : "Prestation"}
+                    </span>
+                    {depot.is_achat_olives && (
+                      <span className={`font-semibold ${STATUT_COLORS[depot.statut_paiement_achat]}`}>
+                        {STATUT_LABELS[depot.statut_paiement_achat]}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <Pagination currentPage={currentPage} pageCount={pageCount} onPageChange={goToPage} />
+          </>
         )}
       </main>
 
-      <button
-        type="button"
-        onClick={() => navigate("/depots/nouveau")}
-        aria-label="Nouveau dépôt"
-        className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 flex items-center justify-center"
-      >
-        +
-      </button>
+      {!isReadOnly && (
+        <button
+          type="button"
+          onClick={() => navigate("/depots/nouveau")}
+          aria-label="Nouveau dépôt"
+          className="fixed bottom-24 md:bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 transition-transform motion-reduce:transition-none active:scale-95 flex items-center justify-center"
+        >
+          +
+        </button>
+      )}
     </div>
   );
 }

@@ -9,6 +9,7 @@
 // orchestre l'UI et les états de chargement/erreur.
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { Users } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { getCurrentUser, getHuilerieId } from "../lib/session";
 import { archiveClient, createClient, getClients } from "../lib/clients";
@@ -17,8 +18,12 @@ import { computeClientTotals, type ClientTotals } from "../lib/clientProfileCalc
 import type { Client } from "../types/client";
 import type { ClientFormInput } from "../lib/clientSchema";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { usePagination } from "../hooks/usePagination";
 import ClientFormModal from "../components/ClientFormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
+import Skeleton from "../components/Skeleton";
+import EmptyState from "../components/EmptyState";
+import Pagination from "../components/Pagination";
 
 export default function ClientsList() {
   const navigate = useNavigate();
@@ -150,6 +155,8 @@ export default function ClientsList() {
     }
   };
 
+  const { pageItems, currentPage, pageCount, goToPage } = usePagination(clients);
+
   return (
     <div className="min-h-screen bg-[#F7F8FA] pb-24">
       <header className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10">
@@ -164,14 +171,8 @@ export default function ClientsList() {
         />
       </header>
 
-      <main className="p-4">
-        {loading && (
-          <div className="space-y-3" aria-label="Chargement des clients">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-20 rounded-2xl bg-gray-200 animate-pulse" />
-            ))}
-          </div>
-        )}
+      <main className="p-4 max-w-3xl mx-auto">
+        {loading && <Skeleton count={3} label="Chargement des clients" />}
 
         {!loading && error && (
           <p role="alert" className="text-center text-[#E63946] mt-8">
@@ -180,17 +181,20 @@ export default function ClientsList() {
         )}
 
         {!loading && !error && clients.length === 0 && (
-          <p className="text-center text-gray-500 mt-8">
-            {searchInput ? "Aucun client ne correspond à cette recherche." : "Aucun client — créez le premier."}
-          </p>
+          <EmptyState
+            icon={Users}
+            title={searchInput ? "Aucun client ne correspond à cette recherche." : "Aucun client"}
+            description={searchInput ? undefined : "Créez le premier avec le bouton +."}
+          />
         )}
 
         {!loading && !error && clients.length > 0 && (
+          <>
           <ul className="space-y-3">
-            {clients.map((client) => {
+            {pageItems.map((client) => {
               const totals = totalsFor(client);
               return (
-                <li key={client.id} className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4 flex-wrap sm:flex-nowrap">
+                <li key={client.id} className="bg-white rounded-2xl shadow-soft p-4 flex items-center gap-4 flex-wrap sm:flex-nowrap">
                   <div className="w-12 h-12 shrink-0 rounded-full bg-[#2D6A4F] text-white flex items-center justify-center text-lg font-bold">
                     {client.nom_complet.charAt(0).toUpperCase()}
                   </div>
@@ -228,7 +232,7 @@ export default function ClientsList() {
                       type="button"
                       onClick={() => setArchiveTarget(client)}
                       aria-label={`Archiver ${client.nom_complet}`}
-                      className="min-w-[48px] min-h-[48px] rounded-xl text-[#E63946] hover:bg-red-50 font-semibold"
+                      className="min-w-[48px] min-h-[48px] rounded-xl text-[#E63946] hover:bg-red-50 font-semibold transition-colors motion-reduce:transition-none"
                     >
                       Archiver
                     </button>
@@ -237,6 +241,8 @@ export default function ClientsList() {
               );
             })}
           </ul>
+          <Pagination currentPage={currentPage} pageCount={pageCount} onPageChange={goToPage} />
+          </>
         )}
       </main>
 
@@ -244,7 +250,7 @@ export default function ClientsList() {
         type="button"
         onClick={() => setFormOpen(true)}
         aria-label="Nouveau client"
-        className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 flex items-center justify-center"
+        className="fixed bottom-24 md:bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 transition-transform motion-reduce:transition-none active:scale-95 flex items-center justify-center"
       >
         +
       </button>

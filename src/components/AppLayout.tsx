@@ -10,9 +10,12 @@ import { supabase } from "../lib/supabase";
 import { getCurrentUser, getHuilerieId, logout } from "../lib/session";
 import { endSession } from "../lib/auth";
 import { getHuilerieName } from "../lib/huilerie";
-import { getActiveSeason } from "../lib/depots";
+import { SeasonConsultationProvider } from "../lib/seasonConsultationContext";
+import { ToastProvider } from "./Toast";
 import Sidebar from "./Sidebar";
 import AppHeader from "./AppHeader";
+import BottomNav from "./BottomNav";
+import ReadOnlyBanner from "./ReadOnlyBanner";
 
 export default function AppLayout() {
   const navigate = useNavigate();
@@ -20,7 +23,6 @@ export default function AppLayout() {
   const huilerieId = getHuilerieId();
 
   const [huilerieNom, setHuilerieNom] = useState("Huilerie");
-  const [saisonNom, setSaisonNom] = useState<string | null>(null);
 
   useEffect(() => {
     if (!huilerieId) return;
@@ -32,14 +34,6 @@ export default function AppLayout() {
       })
       .catch(() => {
         // Non bloquant : l'en-tête garde le nom par défaut.
-      });
-
-    getActiveSeason(supabase)
-      .then((saison) => {
-        if (!cancelled) setSaisonNom(saison?.nom ?? null);
-      })
-      .catch(() => {
-        // Non bloquant : l'en-tête n'affiche simplement pas de saison.
       });
 
     return () => {
@@ -67,19 +61,26 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F7F8FA]">
-      <Sidebar role={currentUser.role} />
-      <div className="flex-1 flex flex-col min-w-0">
-        <AppHeader
-          huilerieNom={huilerieNom}
-          saisonNom={saisonNom}
-          currentUser={currentUser}
-          onLogout={() => void handleLogout()}
-        />
-        <main className="flex-1 overflow-y-auto">
-          <Outlet />
-        </main>
-      </div>
-    </div>
+    <SeasonConsultationProvider>
+      <ToastProvider>
+        <div className="flex min-h-screen bg-[#F7F8FA]">
+          <Sidebar role={currentUser.role} />
+          <div className="flex-1 flex flex-col min-w-0">
+            <AppHeader
+              huilerieNom={huilerieNom}
+              currentUser={currentUser}
+              onLogout={() => void handleLogout()}
+            />
+            <ReadOnlyBanner />
+            <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
+              <div className="max-w-7xl mx-auto w-full">
+                <Outlet />
+              </div>
+            </main>
+          </div>
+          <BottomNav role={currentUser.role} />
+        </div>
+      </ToastProvider>
+    </SeasonConsultationProvider>
   );
 }

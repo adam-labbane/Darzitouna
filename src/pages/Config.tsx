@@ -10,10 +10,11 @@
 // d'afficher un écran de gestion inutile à qui n'a pas le rôle.
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router";
+import { CalendarRange } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { getCurrentUser, getHuilerieId } from "../lib/session";
 import { getHuilerieName } from "../lib/huilerie";
-import { getSaisons, createSaison, updateSaison, activateSaison, deactivateSaison } from "../lib/saisons";
+import { createSaison, updateSaison, activateSaison, deactivateSaison } from "../lib/saisons";
 import {
   getUtilisateurs,
   createUtilisateur,
@@ -26,11 +27,14 @@ import { buildSeasonSummary, type SeasonSummaryData } from "../lib/seasonSummary
 import type { Saison } from "../types/saison";
 import type { UserRole, Utilisateur } from "../types/utilisateur";
 import type { SaisonFormInput } from "../lib/saisonSchema";
+import { useSeasonConsultation } from "../hooks/useSeasonConsultation";
 import SaisonFormModal from "../components/SaisonFormModal";
 import UtilisateurFormModal from "../components/UtilisateurFormModal";
 import CloseSeasonModal from "../components/CloseSeasonModal";
 import SeasonSummaryView from "../components/SeasonSummaryView";
 import ConfirmDialog from "../components/ConfirmDialog";
+import Skeleton from "../components/Skeleton";
+import EmptyState from "../components/EmptyState";
 
 const ROLE_LABELS: Record<UserRole, string> = {
   GERANT: "Gérant",
@@ -64,9 +68,11 @@ export default function Config() {
   }, [huilerieId]);
 
   // ---- Saisons ----
-  const [saisons, setSaisons] = useState<Saison[]>([]);
-  const [saisonsLoading, setSaisonsLoading] = useState(true);
-  const [saisonsError, setSaisonsError] = useState("");
+  // Liste des saisons : lue depuis le contexte partagé (même source que
+  // le sélecteur de l'en-tête) plutôt que re-fetchée indépendamment ici —
+  // un seul endroit à rafraîchir après création/activation/clôture, pas
+  // de risque de désynchronisation entre cette page et le sélecteur.
+  const { allSaisons: saisons, loading: saisonsLoading, refreshSaisons } = useSeasonConsultation();
   const [saisonModalOpen, setSaisonModalOpen] = useState(false);
   const [editingSaison, setEditingSaison] = useState<Saison | null>(null);
   const [saisonActionError, setSaisonActionError] = useState("");
@@ -111,36 +117,6 @@ export default function Config() {
         : "Saison clôturée et nouvelle campagne ouverte.",
     );
     await refreshSaisons();
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-    getSaisons(supabase)
-      .then((data) => {
-        if (!cancelled) {
-          setSaisons(data);
-          setSaisonsError("");
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setSaisonsError("Impossible de charger les saisons. Vérifiez votre connexion.");
-      })
-      .finally(() => {
-        if (!cancelled) setSaisonsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const refreshSaisons = async () => {
-    try {
-      const data = await getSaisons(supabase);
-      setSaisons(data);
-      setSaisonsError("");
-    } catch {
-      setSaisonsError("Impossible de charger les saisons. Vérifiez votre connexion.");
-    }
   };
 
   const handleSaisonSubmit = async (data: SaisonFormInput) => {
@@ -287,25 +263,22 @@ export default function Config() {
       <main className="p-4">
         {tab === "saisons" && (
           <section role="tabpanel" aria-label="Saisons">
-            {saisonsLoading && <p className="text-center text-gray-400 mt-8">Chargement…</p>}
-            {!saisonsLoading && saisonsError && (
-              <p role="alert" className="text-center text-[#E63946] mt-8">
-                {saisonsError}
-              </p>
+            {saisonsLoading && <Skeleton count={2} label="Chargement des saisons" />}
+            {!saisonsLoading && saisons.length === 0 && (
+              <EmptyState
+                icon={CalendarRange}
+                title="Aucune saison"
+                description="Créez la première pour commencer à opérer."
+              />
             )}
-            {!saisonsLoading && !saisonsError && saisons.length === 0 && (
-              <p className="text-center text-gray-500 mt-8">
-                Aucune saison — créez la première pour commencer à opérer.
-              </p>
-            )}
-            {!saisonsLoading && !saisonsError && saisons.length > 0 && (
+            {!saisonsLoading && saisons.length > 0 && (
               <ul className="space-y-3">
                 {saisons.map((saison) => {
                   const estCloturee = saison.date_cloture !== null;
                   return (
                     <li
                       key={saison.id}
-                      className={`bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4 flex-wrap ${
+                      className={`bg-white rounded-2xl shadow-soft p-4 flex items-center gap-4 flex-wrap ${
                         !saison.is_active ? "opacity-70" : ""
                       }`}
                     >
@@ -410,7 +383,7 @@ export default function Config() {
                 setSaisonModalOpen(true);
               }}
               aria-label="Nouvelle saison"
-              className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 flex items-center justify-center"
+              className="fixed bottom-24 md:bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 transition-transform motion-reduce:transition-none active:scale-95 flex items-center justify-center"
             >
               +
             </button>
@@ -419,7 +392,7 @@ export default function Config() {
 
         {tab === "personnel" && (
           <section role="tabpanel" aria-label="Personnel">
-            {personnelLoading && <p className="text-center text-gray-400 mt-8">Chargement…</p>}
+            {personnelLoading && <Skeleton count={2} label="Chargement du personnel" />}
             {!personnelLoading && personnelError && (
               <p role="alert" className="text-center text-[#E63946] mt-8">
                 {personnelError}
@@ -430,7 +403,7 @@ export default function Config() {
                 {utilisateurs.map((utilisateur) => {
                   const isSelf = utilisateur.id === currentUser?.id;
                   return (
-                    <li key={utilisateur.id} className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4 flex-wrap">
+                    <li key={utilisateur.id} className="bg-white rounded-2xl shadow-soft p-4 flex items-center gap-4 flex-wrap">
                       <div className="flex-1 min-w-[160px]">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-semibold text-gray-900">{utilisateur.nom_complet}</p>
@@ -486,7 +459,7 @@ export default function Config() {
               type="button"
               onClick={() => setUserModal({ mode: "create" })}
               aria-label="Nouvel utilisateur"
-              className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 flex items-center justify-center"
+              className="fixed bottom-24 md:bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 transition-transform motion-reduce:transition-none active:scale-95 flex items-center justify-center"
             >
               +
             </button>
