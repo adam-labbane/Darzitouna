@@ -21,6 +21,7 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import ClientFormModal from "../components/ClientFormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
 import TicketPreview from "../components/TicketPreview";
+import NoActiveSeasonMessage from "../components/NoActiveSeasonMessage";
 
 const TOTAL_STEPS = 4;
 
@@ -220,14 +221,7 @@ export default function DepotNouveau() {
   }
 
   if (!season) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA] p-4">
-        <p role="alert" className="text-center text-gray-600 max-w-sm">
-          Aucune saison active — le gérant doit en ouvrir une avant de pouvoir enregistrer un
-          dépôt.
-        </p>
-      </div>
-    );
+    return <NoActiveSeasonMessage action="enregistrer un dépôt" />;
   }
 
   // ---- Écran ticket (après validation) ----

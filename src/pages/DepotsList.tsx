@@ -10,6 +10,7 @@ import { getDepots, getActiveSeason } from "../lib/depots";
 import type { DepotWithClient, StatutPaiement } from "../types/depot";
 import type { Saison } from "../types/saison";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import NoActiveSeasonMessage from "../components/NoActiveSeasonMessage";
 
 const STATUT_LABELS: Record<StatutPaiement, string> = {
   NON_PAYE: "Non payé",
@@ -104,14 +105,7 @@ export default function DepotsList() {
   }
 
   if (!season) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA] p-4">
-        <p role="alert" className="text-center text-gray-600 max-w-sm">
-          Aucune saison active — le gérant doit en ouvrir une avant de pouvoir enregistrer un
-          dépôt.
-        </p>
-      </div>
-    );
+    return <NoActiveSeasonMessage action="enregistrer un dépôt" />;
   }
 
   return (

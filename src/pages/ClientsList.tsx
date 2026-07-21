@@ -1,13 +1,19 @@
 // src/pages/ClientsList.tsx
 //
-// Liste des clients de l'huilerie : recherche, création, édition,
-// archivage. La logique métier (accès données, validation) est déléguée
-// à src/lib/clients.ts et src/lib/clientSchema.ts — cette page orchestre
-// l'UI et les états de chargement/erreur.
+// Liste des clients de l'huilerie : recherche, création, archivage. Le
+// clic sur un client mène à sa fiche détaillée (/clients/:id,
+// ClientProfil.tsx) — l'édition et l'historique complet y vivent
+// désormais, ce n'est plus le rôle de cette liste. La logique métier
+// (accès données, validation) est déléguée à src/lib/clients.ts,
+// src/lib/clientSchema.ts et src/lib/clientProfile.ts — cette page
+// orchestre l'UI et les états de chargement/erreur.
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { supabase } from "../lib/supabase";
 import { getCurrentUser, getHuilerieId } from "../lib/session";
-import { archiveClient, createClient, getClients, updateClient } from "../lib/clients";
+import { archiveClient, createClient, getClients } from "../lib/clients";
+import { getAllClientsFinancials, type ClientFinancials } from "../lib/clientProfile";
+import { computeClientTotals, type ClientTotals } from "../lib/clientProfileCalculations";
 import type { Client } from "../types/client";
 import type { ClientFormInput } from "../lib/clientSchema";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
@@ -15,6 +21,7 @@ import ClientFormModal from "../components/ClientFormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function ClientsList() {
+  const navigate = useNavigate();
   const huilerieId = getHuilerieId();
   // Décision côté React : uniquement pour ne pas AFFICHER un bouton
   // interdit. La vraie protection est le trigger protect_client_archiving
@@ -31,14 +38,47 @@ export default function ClientsList() {
   const debouncedSearch = useDebouncedValue(searchInput, 300);
 
   const [formOpen, setFormOpen] = useState(false);
-  const [editingClient, setEditingClient] = useState<Client | null>(null);
 
   const [archiveTarget, setArchiveTarget] = useState<Client | null>(null);
   const [archiveError, setArchiveError] = useState("");
 
-  // Réutilisée après une création/édition/archivage (event handlers) —
-  // aucun souci à y appeler setState synchrone puisque ce n'est jamais
-  // invoqué directement depuis un effect (voir plus bas).
+  // Total facturé et reste dû de chaque client, calculés (jamais
+  // client.solde_compte seul — voir clientProfileCalculations.ts).
+  // Chargés une fois indépendamment de la recherche (ne dépend pas du
+  // texte tapé) ; non bloquant si l'appel échoue, les montants affichés
+  // retombent alors sur le seul solde_compte via
+  // computeClientTotals(..., financials[id] ?? vide, ...).
+  const [financials, setFinancials] = useState<Record<string, ClientFinancials>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    getAllClientsFinancials(supabase)
+      .then((data) => {
+        if (!cancelled) setFinancials(data);
+      })
+      .catch(() => {
+        // Non bloquant : la liste reste utilisable, le reste dû affiché
+        // se limite alors au solde_compte brut pour ces clients.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Un seul calcul (computeClientTotals) fournit total facturé ET reste
+  // dû à partir des mêmes données déjà chargées en batch — jamais deux
+  // calculs séparés qui pourraient diverger.
+  const totalsFor = (client: Client): ClientTotals =>
+    computeClientTotals(
+      [],
+      financials[client.id]?.factures ?? [],
+      financials[client.id]?.reglements ?? [],
+      client.solde_compte,
+    );
+
+  // Réutilisée après une création/archivage (event handlers) — aucun
+  // souci à y appeler setState synchrone puisque ce n'est jamais invoqué
+  // directement depuis un effect (voir plus bas).
   const fetchClients = useCallback(async (search: string) => {
     try {
       const data = await getClients(supabase, search);
@@ -89,23 +129,9 @@ export default function ClientsList() {
     setLoading(true);
   };
 
-  const handleOpenCreate = () => {
-    setEditingClient(null);
-    setFormOpen(true);
-  };
-
-  const handleOpenEdit = (client: Client) => {
-    setEditingClient(client);
-    setFormOpen(true);
-  };
-
   const handleFormSubmit = async (data: ClientFormInput) => {
-    if (editingClient) {
-      await updateClient(supabase, editingClient.id, data);
-    } else {
-      if (!huilerieId) return;
-      await createClient(supabase, huilerieId, data);
-    }
+    if (!huilerieId) return;
+    await createClient(supabase, huilerieId, data);
     setFormOpen(false);
     // Pas de setLoading(true) : la liste reste affichée telle quelle
     // pendant le rafraîchissement, sans flash de skeleton.
@@ -161,68 +187,69 @@ export default function ClientsList() {
 
         {!loading && !error && clients.length > 0 && (
           <ul className="space-y-3">
-            {clients.map((client) => (
-              <li
-                key={client.id}
-                className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4"
-              >
-                <div className="w-12 h-12 shrink-0 rounded-full bg-[#2D6A4F] text-white flex items-center justify-center text-lg font-bold">
-                  {client.nom_complet.charAt(0).toUpperCase()}
-                </div>
+            {clients.map((client) => {
+              const totals = totalsFor(client);
+              return (
+                <li key={client.id} className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4 flex-wrap sm:flex-nowrap">
+                  <div className="w-12 h-12 shrink-0 rounded-full bg-[#2D6A4F] text-white flex items-center justify-center text-lg font-bold">
+                    {client.nom_complet.charAt(0).toUpperCase()}
+                  </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleOpenEdit(client)}
-                  className="flex-1 text-left min-h-[48px]"
-                >
-                  <p className="font-semibold text-gray-900">{client.nom_complet}</p>
-                  <p className="text-sm text-gray-500">{client.telephone ?? "Pas de téléphone"}</p>
-                </button>
-
-                <span
-                  className={`font-semibold text-sm ${
-                    client.solde_compte < 0 ? "text-[#E63946]" : "text-[#2D6A4F]"
-                  }`}
-                >
-                  {client.solde_compte.toFixed(2)} DT
-                </span>
-
-                {isGerant && (
                   <button
                     type="button"
-                    onClick={() => setArchiveTarget(client)}
-                    aria-label={`Archiver ${client.nom_complet}`}
-                    className="min-w-[48px] min-h-[48px] rounded-xl text-[#E63946] hover:bg-red-50 font-semibold"
+                    onClick={() => navigate(`/clients/${client.id}`)}
+                    className="flex-1 text-left min-h-[48px] min-w-[140px]"
                   >
-                    Archiver
+                    <p className="font-semibold text-gray-900">{client.nom_complet}</p>
+                    <p className="text-sm text-gray-500">{client.telephone ?? "Pas de téléphone"}</p>
                   </button>
-                )}
-              </li>
-            ))}
+
+                  {/* Deux valeurs distinctes, chacune avec son libellé —
+                      jamais un montant seul sans savoir ce qu'il représente. */}
+                  <div className="flex gap-4">
+                    <div className="text-right">
+                      <p className="text-xs text-gray-400">Facturé</p>
+                      <p className="font-semibold text-sm text-gray-700">{totals.totalFacture.toFixed(2)} DT</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-400">Reste dû</p>
+                      <p
+                        className={`font-semibold text-sm ${
+                          totals.resteDu > 0 ? "text-[#E63946]" : "text-[#2D6A4F]"
+                        }`}
+                      >
+                        {totals.resteDu.toFixed(2)} DT
+                      </p>
+                    </div>
+                  </div>
+
+                  {isGerant && (
+                    <button
+                      type="button"
+                      onClick={() => setArchiveTarget(client)}
+                      aria-label={`Archiver ${client.nom_complet}`}
+                      className="min-w-[48px] min-h-[48px] rounded-xl text-[#E63946] hover:bg-red-50 font-semibold"
+                    >
+                      Archiver
+                    </button>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </main>
 
       <button
         type="button"
-        onClick={handleOpenCreate}
+        onClick={() => setFormOpen(true)}
         aria-label="Nouveau client"
         className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 flex items-center justify-center"
       >
         +
       </button>
 
-      {formOpen && (
-        <ClientFormModal
-          initialValues={
-            editingClient
-              ? { nom_complet: editingClient.nom_complet, telephone: editingClient.telephone }
-              : undefined
-          }
-          onSubmit={handleFormSubmit}
-          onClose={() => setFormOpen(false)}
-        />
-      )}
+      {formOpen && <ClientFormModal onSubmit={handleFormSubmit} onClose={() => setFormOpen(false)} />}
 
       <ConfirmDialog
         open={archiveTarget !== null}

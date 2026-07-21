@@ -15,6 +15,7 @@ import type { Saison } from "../types/saison";
 import type { Cuve, TypeHuile } from "../types/cuve";
 import { getRendementColor, RENDEMENT_COLOR_HEX } from "../lib/pressageCalculations";
 import PressageModal from "../components/PressageModal";
+import NoActiveSeasonMessage from "../components/NoActiveSeasonMessage";
 
 export default function Pressages() {
   const [season, setSeason] = useState<Saison | null>(null);
@@ -136,13 +137,7 @@ export default function Pressages() {
   }
 
   if (!season) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA] p-4">
-        <p role="alert" className="text-center text-gray-600 max-w-sm">
-          Aucune saison active — le gérant doit en ouvrir une avant de pouvoir presser un dépôt.
-        </p>
-      </div>
-    );
+    return <NoActiveSeasonMessage action="presser un dépôt" />;
   }
 
   return (

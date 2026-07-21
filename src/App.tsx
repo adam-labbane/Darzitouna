@@ -6,10 +6,13 @@ import Setup from "./pages/Setup";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ClientsList from "./pages/ClientsList";
+import ClientProfil from "./pages/ClientProfil";
 import DepotsList from "./pages/DepotsList";
 import DepotNouveau from "./pages/DepotNouveau";
 import Stocks from "./pages/Stocks";
 import Pressages from "./pages/Pressages";
+import Factures from "./pages/Factures";
+import Config from "./pages/Config";
 import ModuleAVenir from "./pages/ModuleAVenir";
 
 const router = createBrowserRouter([
@@ -39,13 +42,14 @@ const router = createBrowserRouter([
     children: [
       { path: "/dashboard", element: <Dashboard /> },
       { path: "/clients", element: <ClientsList /> },
+      { path: "/clients/:id", element: <ClientProfil /> },
       { path: "/depots", element: <DepotsList /> },
       { path: "/depots/nouveau", element: <DepotNouveau /> },
       { path: "/pressages", element: <Pressages /> },
       { path: "/stocks", element: <Stocks /> },
-      { path: "/factures", element: <ModuleAVenir titre="Factures" /> },
+      { path: "/factures", element: <Factures /> },
       { path: "/grignons", element: <ModuleAVenir titre="Grignons" /> },
-      { path: "/config", element: <ModuleAVenir titre="Configuration" /> },
+      { path: "/config", element: <Config /> },
     ],
   },
 ]);

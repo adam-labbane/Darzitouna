@@ -20,17 +20,20 @@
   animation: shake 300ms ease-in-out;
 }
 
-/* Impression du ticket (src/components/TicketPreview.tsx) : seule la
-   zone .print-ticket-area doit sortir sur le papier, pas le reste de
-   l'app. browserPrinter.print() (src/lib/ticket.ts) déclenche
-   window.print(), qui applique ces règles. */
+/* Impression : seule la zone marquée sort sur le papier, pas le reste
+   de l'app. .print-ticket-area (TicketPreview.tsx) est une largeur de
+   ticket thermique (80mm) ; .print-area (SeasonSummaryView.tsx, et tout
+   futur document pleine page) prend la largeur de la page. Les deux
+   déclenchées par window.print(). */
 @media print {
   body * {
     visibility: hidden;
   }
 
   .print-ticket-area,
-  .print-ticket-area * {
+  .print-ticket-area *,
+  .print-area,
+  .print-area * {
     visibility: visible;
   }
 
@@ -39,5 +42,12 @@
     top: 0;
     left: 0;
     width: 80mm;
+  }
+
+  .print-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
   }
 }

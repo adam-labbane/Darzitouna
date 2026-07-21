@@ -32,7 +32,15 @@
       "Bash(echo \"eslint exit: $?\")",
       "Bash(powershell -Command \"Stop-Process -Id 27628 -Force\")",
       "Bash(echo \"tsc: $?\")",
-      "Bash(echo \"eslint: $?\")"
+      "Bash(echo \"eslint: $?\")",
+      "Bash(node scripts/_tmp-test-facturation.mjs)",
+      "Bash(node scripts/_tmp-facturation-e2e.mjs)",
+      "Bash(node scripts/_tmp-debug-nonfacture.mjs)",
+      "Bash(powershell -Command \"Stop-Process -Id 29020 -Force\")",
+      "Bash(tasklist)",
+      "Bash(node scripts/_tmp-test-configuration.mjs)",
+      "Bash(node scripts/_tmp-config-e2e.mjs)",
+      "Bash(powershell -Command \"Stop-Process -Id 29412 -Force\")"
     ]
   }
 }
