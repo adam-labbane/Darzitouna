@@ -8,7 +8,6 @@ import ClientsList from "./pages/ClientsList";
 import ClientProfil from "./pages/ClientProfil";
 import DepotsList from "./pages/DepotsList";
 import DepotNouveau from "./pages/DepotNouveau";
-import DepotTicket from "./pages/DepotTicket";
 import Stocks from "./pages/Stocks";
 import Pressages from "./pages/Pressages";
 import Factures from "./pages/Factures";
@@ -45,7 +44,6 @@ const router = createBrowserRouter([
       { path: "/clients/:id", element: <ClientProfil /> },
       { path: "/depots", element: <DepotsList /> },
       { path: "/depots/nouveau", element: <DepotNouveau /> },
-      { path: "/depots/:id/ticket", element: <DepotTicket /> },
       { path: "/pressages", element: <Pressages /> },
       { path: "/stocks", element: <Stocks /> },
       { path: "/factures", element: <Factures /> },

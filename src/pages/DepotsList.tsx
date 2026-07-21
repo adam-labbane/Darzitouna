@@ -5,7 +5,7 @@ import { supabase } from "../lib/supabase";
 import { getHuilerieId } from "../lib/session";
 import { getDepots } from "../lib/depots";
 import { getHuilerieName } from "../lib/huilerie";
-import { buildTicketData } from "../lib/ticket";
+import { buildTicketData, browserPrinter } from "../lib/ticket";
 import type { DepotWithClient, StatutPaiement } from "../types/depot";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useSeasonConsultation } from "../hooks/useSeasonConsultation";
@@ -80,6 +80,10 @@ export default function DepotsList() {
   }, [consultedSaison, debouncedSearch, statutFilter]);
 
   const { pageItems, currentPage, pageCount, goToPage } = usePagination(depots);
+
+  const selectedTicket = selectedDepot
+    ? buildTicketData(selectedDepot, selectedDepot.client?.nom_complet ?? "Client inconnu", huilerieNom)
+    : null;
 
   if (seasonLoading) {
     return (
@@ -204,7 +208,7 @@ export default function DepotsList() {
         </button>
       )}
 
-      {selectedDepot && (
+      {selectedDepot && selectedTicket && (
         <div
           className="fixed inset-0 z-40 flex items-start justify-center bg-black/40 p-4 overflow-y-auto"
           onClick={() => setSelectedDepot(null)}
@@ -221,18 +225,12 @@ export default function DepotsList() {
               </button>
             </div>
 
-            <TicketPreview
-              ticket={buildTicketData(
-                selectedDepot,
-                selectedDepot.client?.nom_complet ?? "Client inconnu",
-                huilerieNom,
-              )}
-            />
+            <TicketPreview ticket={selectedTicket} />
 
             <div className="flex justify-center mt-4">
               <button
                 type="button"
-                onClick={() => window.open(`/depots/${selectedDepot.id}/ticket`, "_blank", "noopener,noreferrer")}
+                onClick={() => void browserPrinter.print(selectedTicket)}
                 className="h-14 min-w-[48px] px-6 rounded-xl font-semibold text-white bg-[#2D6A4F] hover:bg-green-800"
               >
                 Imprimer
