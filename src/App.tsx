@@ -9,6 +9,7 @@ import ClientsList from "./pages/ClientsList";
 import DepotsList from "./pages/DepotsList";
 import DepotNouveau from "./pages/DepotNouveau";
 import Stocks from "./pages/Stocks";
+import Pressages from "./pages/Pressages";
 import ModuleAVenir from "./pages/ModuleAVenir";
 
 const router = createBrowserRouter([
@@ -40,7 +41,7 @@ const router = createBrowserRouter([
       { path: "/clients", element: <ClientsList /> },
       { path: "/depots", element: <DepotsList /> },
       { path: "/depots/nouveau", element: <DepotNouveau /> },
-      { path: "/pressages", element: <ModuleAVenir titre="Pressage" /> },
+      { path: "/pressages", element: <Pressages /> },
       { path: "/stocks", element: <Stocks /> },
       { path: "/factures", element: <ModuleAVenir titre="Factures" /> },
       { path: "/grignons", element: <ModuleAVenir titre="Grignons" /> },

@@ -20,7 +20,19 @@
       "Bash(node .scratch-debug-login.mjs)",
       "Bash(node .scratch-repro-bug1-edit.mjs)",
       "Bash(node scripts/test-cuve-security-bugs.mjs)",
-      "Bash(taskkill //PID 33940 //F)"
+      "Bash(taskkill //PID 33940 //F)",
+      "Read(//c/Users/adam/.claude/projects/c--Users-adam-Desktop-workspace-Darzitouna/**)",
+      "Bash(node \"C:\\\\Users\\\\adam\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-adam-Desktop-workspace-Darzitouna\\\\8588baac-bd1c-4233-b17e-fa2d31418056\\\\scratchpad\\\\test-pressage-rpc.mjs\")",
+      "Bash(node scripts/_tmp-test-pressage-rpc.mjs)",
+      "Bash(node scripts/_tmp-pressage-e2e.mjs)",
+      "Bash(exit 0)",
+      "Bash(node scripts/_tmp-debug-queries.mjs)",
+      "Bash(rm \"c:\\\\Users\\\\adam\\\\Desktop\\\\workspace\\\\Darzitouna\\\\scripts\\\\_tmp-debug-queries.mjs\")",
+      "Bash(echo \"tsc exit: $?\")",
+      "Bash(echo \"eslint exit: $?\")",
+      "Bash(powershell -Command \"Stop-Process -Id 27628 -Force\")",
+      "Bash(echo \"tsc: $?\")",
+      "Bash(echo \"eslint: $?\")"
     ]
   }
 }
