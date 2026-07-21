@@ -13,8 +13,13 @@ import Pressages from "./pages/Pressages";
 import Factures from "./pages/Factures";
 import Config from "./pages/Config";
 import ModuleAVenir from "./pages/ModuleAVenir";
+import TicketPublic from "./pages/TicketPublic";
 
 const router = createBrowserRouter([
+  {
+    path: "/t/:token",
+    element: <TicketPublic />,
+  },
   {
     path: "/setup",
     element: <Setup />,

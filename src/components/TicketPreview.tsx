@@ -1,10 +1,26 @@
+import { useEffect, useState } from "react";
 import type { TicketData } from "../lib/ticket";
+import { buildPublicTicketUrl, generateQrDataUrl } from "../lib/qrcode";
 
 interface TicketPreviewProps {
   ticket: TicketData;
 }
 
 export default function TicketPreview({ ticket }: TicketPreviewProps) {
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    generateQrDataUrl(buildPublicTicketUrl(ticket.tokenPublic))
+      .then((url) => {
+        if (!cancelled) setQrDataUrl(url);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [ticket.tokenPublic]);
+
   const dateFormatee = new Date(ticket.dateDepotIso).toLocaleString("fr-FR", {
     day: "2-digit",
     month: "2-digit",
@@ -39,6 +55,15 @@ export default function TicketPreview({ ticket }: TicketPreviewProps) {
 
       {ticket.isAchat && ticket.montantTotal !== undefined && (
         <p className="text-center text-lg font-bold mt-2">{ticket.montantTotal.toFixed(2)} DT</p>
+      )}
+
+      <div className="border-t border-dashed border-gray-400 my-2" />
+
+      {qrDataUrl && (
+        <div className="flex flex-col items-center gap-1 py-2">
+          <img src={qrDataUrl} alt={`Suivi du dépôt ${ticket.numeroTicket}`} width={160} height={160} />
+          <p className="text-center text-xs text-gray-500">Scannez pour suivre votre dépôt</p>
+        </div>
       )}
 
       <div className="border-t border-dashed border-gray-400 my-2" />

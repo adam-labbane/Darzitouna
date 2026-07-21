@@ -15,6 +15,7 @@ const basePrestationDepot: Depot = {
   prix_achat_unitaire: null,
   statut_paiement_achat: "NON_PAYE",
   montant_paye_achat: 0,
+  token_public: "a1b2c3d4e5f6",
 };
 
 describe("buildTicketData", () => {
@@ -26,6 +27,7 @@ describe("buildTicketData", () => {
     expect(ticket.poidsNetKg).toBe(85);
     expect(ticket.clientNom).toBe("Ali Ben Salah");
     expect(ticket.huilerieNom).toBe("Huilerie Mohamed");
+    expect(ticket.tokenPublic).toBe("a1b2c3d4e5f6");
   });
 
   it("n'inclut pas de montant pour une prestation", () => {

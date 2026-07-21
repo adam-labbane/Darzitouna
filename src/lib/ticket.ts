@@ -8,6 +8,7 @@ export interface TicketData {
   poidsNetKg: number;
   isAchat: boolean;
   montantTotal?: number;
+  tokenPublic: string;
 }
 
 export function buildTicketData(depot: Depot, clientNom: string, huilerieNom: string): TicketData {
@@ -18,6 +19,7 @@ export function buildTicketData(depot: Depot, clientNom: string, huilerieNom: st
     clientNom,
     poidsNetKg: depot.poids_olives_kg,
     isAchat: depot.is_achat_olives,
+    tokenPublic: depot.token_public,
   };
 
   if (depot.is_achat_olives && depot.prix_achat_unitaire !== null) {

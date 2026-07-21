@@ -13,6 +13,7 @@ export interface Depot {
   prix_achat_unitaire: number | null;
   statut_paiement_achat: StatutPaiement;
   montant_paye_achat: number;
+  token_public: string;
 }
 
 export interface DepotWithClient extends Depot {
