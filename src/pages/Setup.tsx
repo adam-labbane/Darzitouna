@@ -1,33 +1,29 @@
-// src/pages/Setup.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { supabase } from "../lib/supabase";
 import { setHuilerieId } from "../lib/session";
 
 export default function Setup() {
-  const [code, setCode] = useState("");        // le code tapé par le gérant
-  const [error, setError] = useState("");      // message d'erreur éventuel
-  const [loading, setLoading] = useState(false); // pour désactiver le bouton pendant la vérif
-  const navigate = useNavigate();              // pour rediriger après succès
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleActivate = async () => {
     setError("");
     setLoading(true);
 
-    // On appelle la fonction PostgreSQL activate_tablet avec le code saisi
     const { data, error } = await supabase.rpc("activate_tablet", {
       code: code.trim(),
     });
 
     setLoading(false);
 
-    // data = l'UUID de l'huilerie si le code est bon, null sinon
     if (error || !data) {
       setError("Code invalide. Contactez l'administrateur.");
       return;
     }
 
-    // Code valide → on enregistre l'huilerie sur la tablette et on va au login
     setHuilerieId(data);
     navigate("/");
   };

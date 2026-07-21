@@ -1,22 +1,8 @@
-// src/components/ClientFormModal.tsx
-//
-// Modal de création ET d'édition d'un client (le même formulaire sert aux
-// deux : `initialValues` absent = création, présent = édition). Validation
-// Zod au submit ; le parent (ClientsList) fournit onSubmit qui appelle
-// createClient()/updateClient() selon le mode.
-//
-// Pas de prop `open` : le parent monte/démonte ce composant (rendu
-// conditionnel), il n'existe donc jamais en mémoire tant qu'il ne doit
-// pas être affiché. Chaque ouverture est un montage React neuf, donc les
-// useState ci-dessous partent directement de la bonne valeur (via leur
-// initialiseur) sans avoir besoin d'un effect pour "réinitialiser" quoi
-// que ce soit à l'ouverture — cf. "You Might Not Need an Effect".
 import { useState, type FormEvent } from "react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { clientSchema, type ClientFormInput } from "../lib/clientSchema";
 
 interface ClientFormModalProps {
-  // Présent = mode édition (pré-remplit le formulaire), absent = création.
   initialValues?: { nom_complet: string; telephone: string | null };
   onSubmit: (data: ClientFormInput) => Promise<void>;
   onClose: () => void;
@@ -42,8 +28,6 @@ export default function ClientFormModal({
     event.preventDefault();
     setFormError("");
 
-    // Validation stricte AVANT tout envoi réseau — jamais de requête avec
-    // des données non conformes (OWASP : validation des entrées).
     const result = clientSchema.safeParse({ nom_complet: nomComplet, telephone });
     if (!result.success) {
       const errors: FieldErrors = {};

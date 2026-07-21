@@ -9,7 +9,6 @@ export default defineConfig({
     tailwindcss(),
   ],
   test: {
-    // Logique métier pure (src/lib) : pas besoin de DOM simulé.
     environment: 'node',
   },
 })

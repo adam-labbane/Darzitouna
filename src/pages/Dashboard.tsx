@@ -1,8 +1,3 @@
-// src/pages/Dashboard.tsx
-//
-// Tableau de bord d'accueil — version simple : accueil personnalisé +
-// tuiles d'action rapide. Pas de layout ici (sidebar/en-tête) : cette
-// page est rendue dans <Outlet/> par AppLayout.tsx.
 import { useNavigate } from "react-router";
 import { PackagePlus, Settings, Users } from "lucide-react";
 import { getCurrentUser } from "../lib/session";
@@ -60,10 +55,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Emplacement prévu pour les futurs indicateurs (KPIs du jour :
-          poids collecté, nombre de dépôts, montant facturé...) et la vue
-          financière du gérant, une fois les modules Facturation/Stocks
-          en place. Non implémenté volontairement à ce stade. */}
     </div>
   );
 }

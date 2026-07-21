@@ -1,8 +1,3 @@
-// src/tests/factures.test.ts
-//
-// Même approche que src/tests/pressages.test.ts : un query builder
-// Supabase simulé et chaînable, pour vérifier quelle requête est
-// construite sans réseau ni base réelle.
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addReglement, createFacture, getFactureById, getFactures, getPressagesNonFactures } from "../lib/factures";

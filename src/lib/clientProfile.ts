@@ -1,8 +1,3 @@
-// src/lib/clientProfile.ts
-//
-// Accès aux données agrégées d'un client (fiche client + colonne "reste
-// dû" de la liste). Client Supabase injecté en paramètre (même pattern
-// que factures.ts/pressages.ts) : testable sans réseau.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Client } from "../types/client";
 import type { Depot } from "../types/depot";
@@ -14,9 +9,6 @@ export interface ClientProfileFacture extends Facture {
   reglement: Reglement[];
 }
 
-// Détail du dépôt d'origine (ticket, poids) nécessaire à l'affichage de
-// l'onglet Pressages — même principe que PressageNonFacture dans
-// factures.ts, qui embarque déjà ce même sous-ensemble de colonnes.
 export interface ClientProfilePressage extends Pressage {
   depot: { numero_ticket: string; poids_olives_kg: number } | null;
 }
@@ -28,21 +20,6 @@ export interface ClientProfileData {
   pressages: ClientProfilePressage[];
 }
 
-/**
- * Fiche d'un client : dépôts, factures (avec règlements embarqués) et
- * pressages, filtrés par saison si `saisonId` est fourni (périmètre par
- * défaut de la fiche), ou tout l'historique sinon. Le client est relu
- * par `id` : la policy RLS `client_isolation` renvoie `null` pour un
- * client d'une autre huilerie — aucune vérification supplémentaire à
- * écrire ici, la fiche affiche alors "Client introuvable".
- *
- * Les pressages n'ont pas de client_id direct (ils sont liés à un
- * dépôt, lui-même lié au client) : `depot!inner(...)` embarque le dépôt
- * ET restreint les lignes racines à ce client — le `!inner` est
- * nécessaire ici, un embed simple ne filtrerait pas les lignes de
- * `pressage` sur une colonne de la table jointe (même piège déjà
- * documenté dans factures.ts pour getPressagesNonFactures).
- */
 export async function getClientProfile(
   client: SupabaseClient,
   clientId: string,
@@ -91,14 +68,6 @@ export interface ClientFinancials {
   reglements: { montant: number }[];
 }
 
-/**
- * Factures + règlements de TOUS les clients de la huilerie, groupés par
- * client_id, en une seule requête — pas un aller-retour par ligne de la
- * liste (N+1). Renvoie les tableaux bruts, pas un reste dû déjà calculé :
- * l'appelant (ClientsList.tsx) passe ces tableaux à computeClientTotals()
- * avec le solde_compte de chaque client, pour ne jamais dupliquer le
- * calcul du reste dû à deux endroits.
- */
 export async function getAllClientsFinancials(
   client: SupabaseClient,
 ): Promise<Record<string, ClientFinancials>> {

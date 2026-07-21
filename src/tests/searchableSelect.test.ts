@@ -1,4 +1,3 @@
-// src/tests/searchableSelect.test.ts
 import { describe, expect, it } from "vitest";
 import { moveActiveIndex } from "../lib/searchableSelect";
 

@@ -1,12 +1,3 @@
-// src/components/UtilisateurFormModal.tsx
-//
-// Un seul composant pour les trois actions du volet Personnel, choisies
-// via la prop `mode` (union discriminante — chaque mode a son propre
-// payload de onSubmit, vérifié par TypeScript) :
-//   - "create" : nom + rôle + PIN (PinKeypad) — création complète.
-//   - "edit"   : nom + rôle seuls — jamais le PIN (voir "reset-pin").
-//   - "reset-pin" : PinKeypad seul — réinitialisation, jamais le nom/rôle.
-// Réutilise PinKeypad.tsx tel quel (composant contrôlé value/onChange).
 import { useState, type FormEvent } from "react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { isPinComplete } from "../lib/pin";
@@ -56,12 +47,6 @@ export default function UtilisateurFormModal(props: UtilisateurFormModalProps) {
     "reset-pin": "Réinitialiser le code PIN",
   };
 
-  // pinOverride : handlePinChange appelle handleSubmit dans le même tick
-  // que setPin(newPin) — le state `pin` lu depuis la closure serait donc
-  // encore celui d'AVANT ce dernier chiffre (les mises à jour de state
-  // React ne sont pas synchrones). On passe explicitement la valeur
-  // fraîche plutôt que de compter sur `pin` pour éviter de valider un
-  // PIN à 3 chiffres au moment même où le 4e vient d'être saisi.
   const handleSubmit = async (event: FormEvent, pinOverride?: string) => {
     event.preventDefault();
     setFormError("");
@@ -113,7 +98,6 @@ export default function UtilisateurFormModal(props: UtilisateurFormModalProps) {
       return;
     }
 
-    // mode === "reset-pin"
     const result = pinSchema.safeParse(currentPin);
     if (!result.success) {
       setFieldErrors({ pin: result.error.issues[0]?.message });
@@ -130,8 +114,6 @@ export default function UtilisateurFormModal(props: UtilisateurFormModalProps) {
     }
   };
 
-  // Auto-submit dès que le 4e chiffre est saisi (même choix que
-  // Login.tsx) : réaction à une interaction utilisateur, pas un effect.
   const handlePinChange = (newPin: string) => {
     setPin(newPin);
     if (isPinComplete(newPin) && !submitting) {

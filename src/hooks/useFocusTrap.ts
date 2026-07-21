@@ -1,10 +1,3 @@
-// src/hooks/useFocusTrap.ts
-//
-// Piège le focus clavier à l'intérieur d'un dialog modal (RGAA) : Tab et
-// Shift+Tab bouclent sur les éléments focusables du dialog au lieu d'en
-// sortir, Escape ferme, et le focus revient à l'élément déclencheur à la
-// fermeture. Partagé par ConfirmDialog et ClientFormModal — même
-// comportement d'accessibilité pour toute future modale de l'app.
 import { useEffect, useRef } from "react";
 
 const FOCUSABLE_SELECTOR =
@@ -14,8 +7,6 @@ export function useFocusTrap(open: boolean, onClose: () => void) {
   const containerRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
-  // À l'ouverture : mémorise l'élément actif (pour y revenir à la
-  // fermeture) et déplace le focus dans la modale.
   useEffect(() => {
     if (!open) return;
     previouslyFocused.current = document.activeElement as HTMLElement | null;
@@ -27,7 +18,6 @@ export function useFocusTrap(open: boolean, onClose: () => void) {
     };
   }, [open]);
 
-  // Piège Tab/Shift+Tab dans la modale, Escape déclenche la fermeture.
   useEffect(() => {
     if (!open) return;
 

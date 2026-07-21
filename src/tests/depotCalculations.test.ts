@@ -1,4 +1,3 @@
-// src/tests/depotCalculations.test.ts
 import { describe, expect, it } from "vitest";
 import {
   computeNetWeight,
@@ -17,8 +16,6 @@ describe("computeNetWeight", () => {
   });
 
   it("peut renvoyer une valeur négative (à valider en amont par le schéma Zod)", () => {
-    // computeNetWeight elle-même ne rejette rien : c'est le rôle de
-    // depotSchema.ts (tare < brut) de refuser ce cas avant l'appel.
     expect(computeNetWeight(10, 20)).toBe(-10);
   });
 });

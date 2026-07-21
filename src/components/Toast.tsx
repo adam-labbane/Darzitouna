@@ -1,9 +1,3 @@
-// src/components/Toast.tsx
-//
-// Notification de retour visuel (succès/erreur), auto-disparaissante.
-// Contexte léger monté une fois dans AppLayout.tsx — toute page appelle
-// useToast().showToast(message) après une action réussie au lieu de
-// gérer son propre état de notification.
 import { useCallback, useState, type ReactNode } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { ToastContext, type ToastKind } from "../hooks/useToast";

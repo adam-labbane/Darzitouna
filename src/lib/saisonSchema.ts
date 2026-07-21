@@ -1,18 +1,9 @@
-// src/lib/saisonSchema.ts
-//
-// Validation du formulaire saison (OWASP — ne jamais faire confiance à
-// une saisie non validée). Les dates viennent d'un <input type="date">
-// (format ISO YYYY-MM-DD) : la comparaison lexicographique de deux
-// chaînes dans ce format est équivalente à la comparaison chronologique,
-// donc pas besoin de les parser en Date pour la validation croisée.
 import { z } from "zod";
 
 export const saisonSchema = z
   .object({
     nom: z.string().trim().min(1, "Le nom est obligatoire").max(50, "Le nom ne peut pas dépasser 50 caractères"),
 
-    // Chaîne vide normalisée en undefined (même traitement que
-    // cuveSchema.ts pour emplacement) : dates optionnelles.
     date_debut: z
       .string()
       .trim()

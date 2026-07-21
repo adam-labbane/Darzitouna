@@ -1,9 +1,3 @@
-// src/components/Pagination.tsx
-//
-// Barre Précédent/Suivant + indicateur de page, associée à
-// src/hooks/usePagination.ts. Ne s'affiche pas s'il n'y a qu'une seule
-// page — une liste courte ne doit jamais montrer de contrôles de
-// pagination inutiles.
 interface PaginationProps {
   currentPage: number;
   pageCount: number;

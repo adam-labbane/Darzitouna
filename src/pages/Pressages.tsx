@@ -1,10 +1,3 @@
-// src/pages/Pressages.tsx
-//
-// Module Pressage : dépôts en attente de pressage + historique des
-// pressages réalisés. La logique métier (accès données, calculs
-// d'affichage) est déléguée à src/lib/pressages.ts et
-// src/lib/pressageCalculations.ts — cette page orchestre l'UI, même
-// architecture que Stocks.tsx/DepotsList.tsx.
 import { useEffect, useState } from "react";
 import { Factory, Truck } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -30,13 +23,6 @@ export default function Pressages() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Chaîne .then/.catch/.finally écrite directement dans l'effect (pas
-  // déléguée à une fonction async séparée) : react-hooks/set-state-in-effect
-  // signale sinon tout effect qui appelle indirectement une fonction
-  // posant du state, même correctement awaitée — même contrainte déjà
-  // rencontrée dans Stocks.tsx/DepotsList.tsx. Pas de setLoading(true)
-  // ici non plus : l'état initial vaut déjà true pour le premier
-  // chargement (season passe de null à une valeur une seule fois).
   useEffect(() => {
     if (!season) return;
     let cancelled = false;
@@ -66,9 +52,6 @@ export default function Pressages() {
 
   const [selectedDepot, setSelectedDepot] = useState<DepotEnAttente | null>(null);
 
-  // Rechargement après une action utilisateur (pas dans un effect) :
-  // un setState synchrone ici est normal, la règle ne s'applique qu'aux
-  // effects.
   const refreshData = async (saisonId: string) => {
     try {
       const [enAttente, realises, cuvesData] = await Promise.all([

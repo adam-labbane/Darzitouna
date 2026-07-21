@@ -27,11 +27,9 @@ CREATE TABLE utilisateur (
      hash_pin TEXT NOT NULL  
 );
 
--- Types ENUM
 CREATE TYPE type_acheteur AS ENUM ('PRO', 'PARTICULIER');
 CREATE TYPE type_huile AS ENUM ('EXTRA', 'VIERGE', 'LAMPANTE');
 
--- Table client
 CREATE TABLE client (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   huilerie_id UUID NOT NULL REFERENCES huilerie(id),
@@ -40,7 +38,6 @@ CREATE TABLE client (
   solde_compte FLOAT DEFAULT 0
 );
 
--- Table fournisseur
 CREATE TABLE fournisseur (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   huilerie_id UUID NOT NULL REFERENCES huilerie(id),
@@ -48,7 +45,6 @@ CREATE TABLE fournisseur (
   telephone TEXT
 );
 
--- Table acheteur_grignon
 CREATE TABLE acheteur_grignon (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   huilerie_id UUID NOT NULL REFERENCES huilerie(id),
@@ -56,7 +52,6 @@ CREATE TABLE acheteur_grignon (
   type type_acheteur NOT NULL DEFAULT 'PRO'
 );
 
--- Table cuve
 CREATE TABLE cuve (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   huilerie_id UUID NOT NULL REFERENCES huilerie(id),
@@ -67,18 +62,11 @@ CREATE TABLE cuve (
   niveau_actuel FLOAT DEFAULT 0
 );
 
--- ============================================================
--- TYPES ENUM pour les tables suivantes
--- ============================================================
 CREATE TYPE statut_paiement AS ENUM ('NON_PAYE', 'PARTIEL', 'PAYE');
 CREATE TYPE statut_paiement_simple AS ENUM ('NON_PAYE', 'PAYE');
 CREATE TYPE type_mouvement AS ENUM ('PROD', 'VENTE', 'ACHAT_FRNS', 'CORRECTION');
 CREATE TYPE mode_reglement AS ENUM ('ESPECES', 'HUILE', 'VIREMENT');
 
--- ============================================================
--- Table depot (Réception des olives)
--- Dépend de : saison, client, utilisateur
--- ============================================================
 CREATE TABLE depot (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   saison_id UUID NOT NULL REFERENCES saison(id),
@@ -94,11 +82,6 @@ CREATE TABLE depot (
   montant_paye_achat FLOAT DEFAULT 0
 );
 
--- ============================================================
--- Table pressage (Transformation des olives en huile)
--- Dépend de : saison, depot
--- Un dépôt donne au plus un pressage (1 → 0..1)
--- ============================================================
 CREATE TABLE pressage (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   saison_id UUID NOT NULL REFERENCES saison(id),
@@ -109,11 +92,6 @@ CREATE TABLE pressage (
   montant_service_total FLOAT
 );
 
--- ============================================================
--- Table facture_service (Facture générée après un pressage)
--- Dépend de : saison, client, pressage
--- Immuable : modifier un tarif ne change pas les factures passées
--- ============================================================
 CREATE TABLE facture_service (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   saison_id UUID NOT NULL REFERENCES saison(id),
@@ -126,11 +104,6 @@ CREATE TABLE facture_service (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ============================================================
--- Table reglement (Paiements fractionnés d'une facture)
--- Dépend de : facture_service
--- Permet les acomptes et paiements mixtes (espèces + huile)
--- ============================================================
 CREATE TABLE reglement (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   facture_id UUID NOT NULL REFERENCES facture_service(id),
@@ -140,10 +113,6 @@ CREATE TABLE reglement (
   note TEXT
 );
 
--- ============================================================
--- Table vente_grignon (Vente des sous-produits)
--- Dépend de : saison, acheteur_grignon
--- ============================================================
 CREATE TABLE vente_grignon (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   saison_id UUID NOT NULL REFERENCES saison(id),
@@ -154,12 +123,6 @@ CREATE TABLE vente_grignon (
   statut_paiement statut_paiement_simple DEFAULT 'NON_PAYE'
 );
 
--- ============================================================
--- Table mvt_stock_huile (Mouvements de stock dans les cuves)
--- Dépend de : cuve, saison
--- Les FK pressage_id, fournisseur_id, client_id sont nullables
--- car le type de mouvement détermine laquelle est remplie
--- ============================================================
 CREATE TABLE mvt_stock_huile (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   cuve_id UUID NOT NULL REFERENCES cuve(id),
@@ -171,4 +134,3 @@ CREATE TABLE mvt_stock_huile (
   client_id UUID REFERENCES client(id),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-

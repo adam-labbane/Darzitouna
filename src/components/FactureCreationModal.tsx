@@ -1,14 +1,3 @@
-// src/components/FactureCreationModal.tsx
-//
-// Génération d'une facture : recherche du client (même pattern que
-// l'étape 1 du wizard DepotNouveau.tsx), puis sélection d'UN pressage
-// non facturé parmi les siens (V1 simple — voir la décision
-// d'architecture du module : une facture = un pressage). Contrairement
-// aux modals CRUD existants (ClientFormModal, CuveFormModal), ce modal
-// enchaîne deux recherches dépendantes ; il reçoit donc directement le
-// client Supabase en prop plutôt que des données déjà chargées par le
-// parent — extension minimale du même principe d'injection de
-// dépendance déjà utilisé dans tout src/lib/.
 import { useEffect, useState, type FormEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useFocusTrap } from "../hooks/useFocusTrap";
@@ -29,7 +18,6 @@ interface FactureCreationModalProps {
 export default function FactureCreationModal({ client, onCreated, onClose }: FactureCreationModalProps) {
   const dialogRef = useFocusTrap(true, onClose);
 
-  // Étape 1 — client
   const [clientSearch, setClientSearch] = useState("");
   const debouncedSearch = useDebouncedValue(clientSearch, 300);
   const [clientResults, setClientResults] = useState<Client[]>([]);
@@ -49,17 +37,11 @@ export default function FactureCreationModal({ client, onCreated, onClose }: Fac
     };
   }, [client, debouncedSearch]);
 
-  // Étape 2 — pressages non facturés du client sélectionné
   const [pressages, setPressages] = useState<PressageNonFacture[]>([]);
   const [pressagesLoading, setPressagesLoading] = useState(false);
   const [pressagesError, setPressagesError] = useState("");
   const [selectedPressageId, setSelectedPressageId] = useState("");
 
-  // setPressagesLoading(true) part du gestionnaire handleSelectClient
-  // (déclencheur de ce fetch), pas de l'effect lui-même : un setState
-  // synchrone y est normal, contrairement à l'intérieur d'un effect —
-  // même contrainte react-hooks/set-state-in-effect déjà rencontrée
-  // dans DepotsList.tsx.
   useEffect(() => {
     if (!selectedClient) return;
     let cancelled = false;

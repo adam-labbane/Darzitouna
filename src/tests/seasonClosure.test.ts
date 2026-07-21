@@ -1,8 +1,3 @@
-// src/tests/seasonClosure.test.ts
-//
-// Même approche que src/tests/factures.test.ts : un query builder
-// Supabase simulé et chaînable, plus un mock RPC dédié pour
-// close_season_and_open_new.
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { closeSeasonAndOpenNew, getSeasonSummaryData } from "../lib/seasonClosure";

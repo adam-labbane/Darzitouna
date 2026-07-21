@@ -1,8 +1,3 @@
-// src/components/Skeleton.tsx
-//
-// Bloc de chargement générique — généralise les `animate-pulse` déjà
-// dupliqués page par page. Un seul `role="status"` porte l'annonce pour
-// le lecteur d'écran ; les blocs eux-mêmes sont décoratifs (aria-hidden).
 interface SkeletonProps {
   className?: string;
   count?: number;

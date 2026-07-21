@@ -1,9 +1,3 @@
--- ============================================================
--- DONNÉES DE TEST — Dar Zitouna
--- Rechargées à chaque `npx supabase db reset`
--- ============================================================
-
--- 1. Une huilerie de test (A) avec son code d'activation
 INSERT INTO huilerie (id, nom_societe, matricule_fiscal, code_activation)
 VALUES (
   '11111111-1111-1111-1111-111111111111',
@@ -12,7 +6,6 @@ VALUES (
   'ZTN-4F8K-9XQ2-M7P3'
 );
 
--- 2. Une saison active pour cette huilerie
 INSERT INTO saison (id, huilerie_id, nom, date_debut, date_fin, is_active, config_prix_kilo_service)
 VALUES (
   '22222222-2222-2222-2222-222222222222',
@@ -24,11 +17,6 @@ VALUES (
   0.25
 );
 
--- 3. Deux utilisateurs de l'huilerie A : un gérant et un opérateur
--- Le hash_pin ci-dessous est un placeholder immédiatement remplacé par
--- set_user_pin(), qui hache le vrai PIN ET crée/synchronise le compte
--- Supabase Auth lié (voir migration 20260714140000_auth_session_bridge.sql).
--- PIN gérant = 1234, PIN opérateur = 0000
 INSERT INTO utilisateur (id, huilerie_id, nom_complet, role, login_code, hash_pin)
 VALUES
   (
@@ -51,11 +39,6 @@ VALUES
 SELECT set_user_pin('33333333-3333-3333-3333-333333333333', '1234');
 SELECT set_user_pin('44444444-4444-4444-4444-444444444444', '0000');
 
--- ============================================================
--- 4. Huilerie B — sert UNIQUEMENT à prouver l'isolation multi-tenant
--- (voir scripts/verify-multi-tenant-isolation.mjs). Un utilisateur
--- connecté côté huilerie A ne doit jamais voir ces données.
--- ============================================================
 INSERT INTO huilerie (id, nom_societe, matricule_fiscal, code_activation)
 VALUES (
   '55555555-5555-5555-5555-555555555555',
@@ -87,11 +70,6 @@ VALUES (
 
 SELECT set_user_pin('77777777-7777-7777-7777-777777777777', '5678');
 
--- ============================================================
--- 5. Un client par huilerie — preuve d'isolation multi-tenant : un
--- utilisateur connecté côté huilerie A ne doit jamais pouvoir lire
--- le client de l'huilerie B via une requête directe (RLS).
--- ============================================================
 INSERT INTO client (id, huilerie_id, nom_complet, telephone)
 VALUES (
   '88888888-8888-8888-8888-888888888888',
@@ -108,11 +86,6 @@ VALUES (
   '20000002'
 );
 
--- ============================================================
--- 6. Cuves de l'huilerie A — niveaux variés pour voir les 4 couleurs
--- du canvas dès le premier chargement (vert/orange/rouge/gris), plus
--- une cuve pour la huilerie B (isolation multi-tenant).
--- ============================================================
 INSERT INTO cuve (id, huilerie_id, nom_reference, emplacement, type_huile, capacite_max, niveau_actuel)
 VALUES
   (
@@ -122,7 +95,7 @@ VALUES
     'Hangar A',
     'EXTRA',
     2000,
-    1500 -- 75 % -> vert
+    1500
   ),
   (
     'cccccccc-cccc-cccc-cccc-ccccccccccc2',
@@ -131,7 +104,7 @@ VALUES
     'Hangar A',
     'VIERGE',
     2000,
-    800 -- 40 % -> orange
+    800
   ),
   (
     'cccccccc-cccc-cccc-cccc-ccccccccccc3',
@@ -140,7 +113,7 @@ VALUES
     'Hangar B',
     'VIERGE',
     1500,
-    150 -- 10 % -> rouge
+    150
   ),
   (
     'cccccccc-cccc-cccc-cccc-ccccccccccc4',
@@ -149,7 +122,7 @@ VALUES
     'Hangar B',
     'LAMPANTE',
     1000,
-    0 -- 0 % -> gris
+    0
   );
 
 INSERT INTO cuve (id, huilerie_id, nom_reference, emplacement, type_huile, capacite_max, niveau_actuel)

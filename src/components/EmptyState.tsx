@@ -1,7 +1,3 @@
-// src/components/EmptyState.tsx
-//
-// Message d'état vide générique (icône + titre + sous-texte), remplace
-// les `<p>Aucun élément</p>` bruts dispersés dans les listes.
 import type { LucideIcon } from "lucide-react";
 import { Inbox } from "lucide-react";
 

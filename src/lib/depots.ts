@@ -1,19 +1,9 @@
-// src/lib/depots.ts
-//
-// Accès aux données du module Dépôts. Client Supabase injecté en
-// paramètre (même pattern que clients.ts/auth.ts) : testable sans réseau.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Depot, DepotWithClient, StatutPaiement } from "../types/depot";
 import type { Saison } from "../types/saison";
 import type { DepotFormInput } from "./depotSchema";
 import { computeNetWeight, computePaymentStatus, computeTotalAmount } from "./depotCalculations";
 
-/**
- * Saison active de l'huilerie courante. Le RLS (policy saison_isolation)
- * restreint déjà aux saisons de la bonne huilerie ; is_active = true
- * sélectionne la saison en cours. null si aucune saison active — la page
- * appelante doit afficher un message clair, pas planter.
- */
 export async function getActiveSeason(client: SupabaseClient): Promise<Saison | null> {
   const { data, error } = await client
     .from("saison")
@@ -30,16 +20,6 @@ export interface DepotFilters {
   statutPaiement?: StatutPaiement;
 }
 
-/**
- * Liste les dépôts d'une saison, avec le nom du client embarqué (une
- * seule requête, pas un aller-retour par ligne). Le filtre `statutPaiement`
- * est appliqué en SQL. Le filtre `search` (numéro de ticket OU nom de
- * client) est appliqué côté application plutôt qu'en SQL : évite de
- * dépendre de la syntaxe PostgREST pour filtrer sur une colonne d'une
- * table jointe (client.nom_complet), plus fragile à maintenir — le volume
- * par saison d'une seule huilerie reste raisonnable pour un filtrage en
- * mémoire.
- */
 export async function getDepots(
   client: SupabaseClient,
   saisonId: string,
@@ -84,24 +64,10 @@ export async function getDepotById(
 }
 
 export interface CreateDepotInput extends DepotFormInput {
-  // Jamais saisis dans le formulaire : la saison active est résolue par
-  // la page (getActiveSeason), l'utilisateur vient de la session
-  // (getCurrentUser). Voir enforce_depot_user_id côté base : envoyer un
-  // user_id différent de la session échoue, ce champ n'est donc pas une
-  // frontière de sécurité en lui-même, juste une valeur requise par la
-  // colonne NOT NULL.
   saison_id: string;
   user_id: string;
 }
 
-/**
- * Crée un dépôt. numero_ticket n'est jamais envoyé : généré par le
- * trigger set_depot_ticket_number() côté PostgreSQL (migration
- * 20260720110000_depot_ticket_and_security.sql), de façon concurrence-safe.
- * poids_olives_kg et, si achat, statut_paiement_achat sont calculés ici
- * via depotCalculations.ts — aucun trigger DB n'existe pour ce statut
- * (contrairement à facture_service/reglement).
- */
 export async function createDepot(client: SupabaseClient, input: CreateDepotInput): Promise<Depot> {
   const poidsNet = computeNetWeight(input.poids_brut_kg, input.poids_tare_kg);
 

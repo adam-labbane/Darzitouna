@@ -25,3 +25,7 @@ dist-ssr
 
 .env.local
 .env.production
+
+# Script de données de production (PIN en clair) — exécuté à la main
+# dans le SQL Editor Supabase Cloud, jamais commité.
+scripts/seed_production.sql

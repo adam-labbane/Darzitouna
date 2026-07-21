@@ -1,4 +1,3 @@
-// src/tests/clientSchema.test.ts
 import { describe, expect, it } from "vitest";
 import { clientSchema } from "../lib/clientSchema";
 

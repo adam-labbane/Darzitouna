@@ -1,4 +1,3 @@
-// src/tests/seasonSummary.test.ts
 import { describe, expect, it } from "vitest";
 import { buildSeasonSummary, type SeasonSummaryRawData } from "../lib/seasonSummary";
 

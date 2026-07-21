@@ -1,8 +1,3 @@
-// src/pages/DepotsList.tsx
-//
-// Liste des dépôts de la saison active : recherche (ticket/client), filtre
-// par statut de paiement, FAB pour créer un nouveau dépôt. Même
-// architecture que ClientsList.tsx (lib/depots.ts porte la logique).
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Truck } from "lucide-react";
@@ -40,11 +35,6 @@ export default function DepotsList() {
   const debouncedSearch = useDebouncedValue(searchInput, 300);
   const [statutFilter, setStatutFilter] = useState<StatutPaiement | "">("");
 
-  // Pas de setLoading(true) ici : l'état initial vaut déjà true pour le
-  // premier chargement, et les changements de recherche/filtre le
-  // déclenchent depuis leurs propres gestionnaires d'événement plus bas
-  // (un setState synchrone y est normal, contrairement à l'intérieur d'un
-  // effect — cf. la même correction déjà appliquée dans ClientsList.tsx).
   useEffect(() => {
     if (!consultedSaison) return;
     let cancelled = false;

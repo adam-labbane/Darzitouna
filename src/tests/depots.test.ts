@@ -1,8 +1,3 @@
-// src/tests/depots.test.ts
-//
-// Même approche que src/tests/clients.test.ts : un query builder Supabase
-// simulé et chaînable, pour vérifier quelle requête est construite sans
-// réseau ni base réelle.
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createDepot, getActiveSeason, getDepotById, getDepots } from "../lib/depots";
@@ -12,7 +7,6 @@ function createQueryBuilder(result: { data: unknown; error: unknown }) {
     select: vi.fn(() => builder),
     eq: vi.fn(() => builder),
     order: vi.fn(() => builder),
-    // Le paramètre sert uniquement à typer insert.mock.calls[0][0] utilisé plus bas.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     insert: vi.fn((_payload: Record<string, unknown>) => builder),
     single: vi.fn(() => builder),
@@ -158,7 +152,6 @@ describe("createDepot", () => {
     const builder = createQueryBuilder({ data: { id: "depot-1" }, error: null });
     const from = vi.fn(() => builder);
 
-    // poids net = 85, total = 85 * 0.8 = 68, payé 30 -> PARTIEL
     await createDepot(mockClient(from), {
       saison_id: "saison-1",
       user_id: "user-1",

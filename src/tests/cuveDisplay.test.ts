@@ -1,4 +1,3 @@
-// src/tests/cuveDisplay.test.ts
 import { describe, expect, it } from "vitest";
 import {
   computeCorrectionDelta,
@@ -65,10 +64,6 @@ describe("getFillColor", () => {
 });
 
 describe("formatLiters", () => {
-  // Intl.NumberFormat("fr-FR") sépare les milliers par une espace fine
-  // insécable (U+202F), pas une espace normale (U+0020) — comportement
-  // correct de la locale, pas un bug : on teste donc avec le vrai
-  // caractère plutôt que de figer une supposition erronée.
   const NARROW_NBSP = " ";
 
   it("formate avec séparateur de milliers français", () => {
@@ -99,9 +94,6 @@ describe("computeCorrectionDelta", () => {
 });
 
 describe("isCapacityReductionValid", () => {
-  // Bug de recette : baisser la capacité d'une cuve en dessous de son
-  // niveau actuel doit être rejeté — l'éditer ne doit jamais laisser
-  // niveau_actuel > capacite_max (état incohérent).
   it("rejette une capacité inférieure au niveau actuel", () => {
     expect(isCapacityReductionValid(1000, 1500)).toBe(false);
   });

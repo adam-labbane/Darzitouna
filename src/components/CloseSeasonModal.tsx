@@ -1,12 +1,3 @@
-// src/components/CloseSeasonModal.tsx
-//
-// Flux de clôture de saison, en 4 étapes : synthèse → choix de report →
-// nouvelle saison → confirmation. Même architecture de wizard que
-// DepotNouveau.tsx (état `step`, wrapper min-h-[420px] pour stabiliser
-// la position des boutons de navigation entre étapes de hauteurs
-// différentes — voir le bug corrigé sur ce module). La validation finale
-// passe par ConfirmDialog (même pattern que l'archivage) : une
-// confirmation forte avant l'action structurante.
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useFocusTrap } from "../hooks/useFocusTrap";
@@ -39,7 +30,6 @@ export default function CloseSeasonModal({
   const dialogRef = useFocusTrap(true, onClose);
   const [step, setStep] = useState(1);
 
-  // Étape 1 — synthèse de la saison en cours.
   const [summary, setSummary] = useState<SeasonSummaryData | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [summaryError, setSummaryError] = useState("");
@@ -64,18 +54,15 @@ export default function CloseSeasonModal({
     };
   }, [client, activeSaison, huilerieNom]);
 
-  // Étape 2 — choix de report.
   const [reporterStock, setReporterStock] = useState(true);
   const [conserverClients, setConserverClients] = useState(true);
 
-  // Étape 3 — nouvelle saison.
   const [nom, setNom] = useState("");
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [prix, setPrix] = useState(String(activeSaison.config_prix_kilo_service ?? ""));
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
-  // Étape 4 — confirmation + soumission.
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -162,9 +149,6 @@ export default function CloseSeasonModal({
           ))}
         </div>
 
-        {/* min-h stabilise la position des boutons de navigation d'une
-            étape à l'autre — voir le commentaire équivalent dans
-            DepotNouveau.tsx (bug de décalage déjà corrigé sur ce module). */}
         <div className="min-h-[420px]">
           {step === 1 && (
             <section>

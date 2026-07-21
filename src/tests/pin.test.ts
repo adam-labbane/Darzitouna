@@ -1,4 +1,3 @@
-// src/tests/pin.test.ts
 import { describe, expect, it } from "vitest";
 import { appendDigit, isPinComplete, PIN_LENGTH, removeLastDigit } from "../lib/pin";
 

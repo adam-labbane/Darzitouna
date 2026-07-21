@@ -1,4 +1,3 @@
-// src/tests/reglementSchema.test.ts
 import { describe, expect, it } from "vitest";
 import { reglementSchema } from "../lib/reglementSchema";
 

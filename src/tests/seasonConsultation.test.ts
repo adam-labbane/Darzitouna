@@ -1,4 +1,3 @@
-// src/tests/seasonConsultation.test.ts
 import { describe, expect, it } from "vitest";
 import { isConsultationReadOnly } from "../lib/seasonConsultation";
 import type { Saison } from "../types/saison";

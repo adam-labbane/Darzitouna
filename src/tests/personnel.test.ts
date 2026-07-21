@@ -1,8 +1,3 @@
-// src/tests/personnel.test.ts
-//
-// Même approche que src/tests/pressages.test.ts : un query builder
-// Supabase simulé et chaînable, plus un mock dédié pour les appels RPC
-// (create_utilisateur/reset_utilisateur_pin).
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {

@@ -1,9 +1,3 @@
-// src/tests/ticket.test.ts
-//
-// browserPrinter.print() appelle window.print() (API navigateur) : non
-// testé ici (pas de DOM en environnement Node), vérifié en revanche lors
-// des tests manuels en navigateur. buildTicketData() est en revanche pure
-// et entièrement testable.
 import { describe, expect, it } from "vitest";
 import { buildTicketData } from "../lib/ticket";
 import type { Depot } from "../types/depot";

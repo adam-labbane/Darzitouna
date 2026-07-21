@@ -1,4 +1,3 @@
-// src/tests/pinAuth.test.ts
 import { describe, expect, it } from "vitest";
 import {
   initialAttemptState,
@@ -26,7 +25,7 @@ describe("registerFailedAttempt", () => {
     for (let i = 0; i < MAX_PIN_ATTEMPTS; i++) {
       state = registerFailedAttempt(state, now);
     }
-    expect(state.count).toBe(0); // compteur remis à zéro pour la série suivante
+    expect(state.count).toBe(0);
     expect(state.lockedUntil).toBe(now + LOCKOUT_DURATION_MS);
   });
 });

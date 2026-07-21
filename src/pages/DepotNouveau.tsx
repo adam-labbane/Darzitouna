@@ -1,9 +1,3 @@
-// src/pages/DepotNouveau.tsx
-//
-// Wizard de création d'un dépôt, en 4 étapes : client → pesée → type de
-// transaction → validation. Toute la logique métier (calculs, validation,
-// accès données, génération du ticket) est déléguée à src/lib/ — cette
-// page orchestre l'UI et l'état du formulaire.
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router";
 import { supabase } from "../lib/supabase";
@@ -43,7 +37,6 @@ export default function DepotNouveau() {
         if (!cancelled && nom) setHuilerieNom(nom);
       })
       .catch(() => {
-        // Non bloquant : le ticket affichera juste le nom par défaut.
       });
 
     return () => {
@@ -53,7 +46,6 @@ export default function DepotNouveau() {
 
   const [step, setStep] = useState(1);
 
-  // Étape 1 — client
   const [clientSearch, setClientSearch] = useState("");
   const debouncedClientSearch = useDebouncedValue(clientSearch, 300);
   const [clientResults, setClientResults] = useState<Client[]>([]);
@@ -74,7 +66,6 @@ export default function DepotNouveau() {
     };
   }, [debouncedClientSearch]);
 
-  // Étape 2 — pesée
   const [poidsBrut, setPoidsBrut] = useState("");
   const [poidsTare, setPoidsTare] = useState("");
   const brutNum = Number(poidsBrut);
@@ -84,7 +75,6 @@ export default function DepotNouveau() {
   const poidsNet = poidsNetValide ? computeNetWeight(brutNum, tareNum) : 0;
   const [refBac, setRefBac] = useState("");
 
-  // Étape 3 — type de transaction
   const [isAchat, setIsAchat] = useState(false);
   const [prixUnitaire, setPrixUnitaire] = useState("");
   const [montantPaye, setMontantPaye] = useState("");
@@ -96,7 +86,6 @@ export default function DepotNouveau() {
     !isAchat ||
     (prixNum > 0 && montantPaye !== "" && montantPayeNum >= 0 && montantPayeNum <= montantTotal);
 
-  // Étape 4 — validation + ticket
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [ticket, setTicket] = useState<TicketData | null>(null);
@@ -106,10 +95,6 @@ export default function DepotNouveau() {
     (step === 2 && poidsNetValide) ||
     (step === 3 && achatValide);
 
-  // Bouton retour du wizard : à l'étape 1, "Précédent" devient "Quitter"
-  // et ramène à la liste des dépôts — avec confirmation si l'opérateur a
-  // déjà commencé à saisir quelque chose, pour éviter une perte
-  // accidentelle (ConfirmDialog déjà utilisé pour l'archivage client).
   const hasUnsavedData =
     selectedClient !== null || poidsBrut !== "" || poidsTare !== "" || refBac !== "" || isAchat;
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
@@ -183,8 +168,6 @@ export default function DepotNouveau() {
     setTicket(null);
   };
 
-  // ---- États de garde ----
-
   if (seasonLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA]">
@@ -197,16 +180,9 @@ export default function DepotNouveau() {
     return <NoActiveSeasonMessage action="enregistrer un dépôt" />;
   }
 
-  // Un dépôt ne peut être créé que sur la saison active — accéder à cette
-  // page en consultant une saison passée (URL directe, bouton masqué mais
-  // atteint autrement) renvoie vers la liste. Confort d'ergonomie : la
-  // vraie protection est le trigger enforce_saison_active_for_write côté
-  // base (migration 20260722100000_readonly_season_enforcement.sql).
   if (isReadOnly) {
     return <Navigate to="/depots" replace />;
   }
-
-  // ---- Écran ticket (après validation) ----
 
   if (ticket) {
     return (
@@ -240,8 +216,6 @@ export default function DepotNouveau() {
     );
   }
 
-  // ---- Wizard ----
-
   return (
     <div className="min-h-screen bg-[#F7F8FA] pb-8">
       <header className="bg-white border-b border-gray-100 px-4 py-4">
@@ -260,13 +234,6 @@ export default function DepotNouveau() {
       </header>
 
       <main className="p-4 max-w-lg mx-auto">
-        {/* min-h stabilise la position du bloc de boutons (Précédent/
-            Quitter/Suivant) d'une étape à l'autre. Sans ça, un contenu
-            d'étape plus court (ex: pesée) fait remonter les boutons par
-            rapport à un contenu plus long (ex: recherche client avec
-            résultats) : un opérateur qui retape au même endroit après
-            "Précédent" peut alors toucher un autre bouton que celui visé.
-            Bug réel constaté : cf. plan de correction des bogues. */}
         <div className="min-h-[420px]">
         {step === 1 && (
           <section>

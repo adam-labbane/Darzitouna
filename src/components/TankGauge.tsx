@@ -1,11 +1,3 @@
-// src/components/TankGauge.tsx
-//
-// Une cuve dessinée en réservoir vertical (SVG pur, pas de librairie de
-// graphes). Le remplissage est calculé par cuveDisplay.ts (fonctions
-// pures, testées) — ce composant ne fait que traduire ces valeurs en
-// dessin. Le pourcentage est toujours affiché en texte (deux fois : dans
-// le réservoir et en dessous) — la couleur est un renfort visuel, jamais
-// la seule information (RGAA, daltonisme).
 import {
   computeFillPercentage,
   formatLiters,
@@ -57,7 +49,6 @@ export default function TankGauge({ cuve }: TankGaugeProps) {
           </clipPath>
         </defs>
 
-        {/* Corps du réservoir */}
         <rect
           x={TANK_PADDING}
           y={TANK_PADDING}
@@ -69,8 +60,6 @@ export default function TankGauge({ cuve }: TankGaugeProps) {
           strokeWidth="2"
         />
 
-        {/* Remplissage : monte depuis le bas, transition douce quand le
-            niveau change (ex: après une correction). */}
         <rect
           x={TANK_PADDING}
           y={TANK_PADDING + innerHeight - fillHeight}
@@ -81,9 +70,6 @@ export default function TankGauge({ cuve }: TankGaugeProps) {
           style={{ transition: "y 500ms ease-out, height 500ms ease-out" }}
         />
 
-        {/* Pourcentage affiché en gros dans le réservoir. Couleur du texte
-            adaptée pour rester lisible que le point soit sur fond rempli
-            (foncé) ou vide (blanc). */}
         <text
           x={TANK_WIDTH / 2}
           y={TANK_HEIGHT / 2 + 7}

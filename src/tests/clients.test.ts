@@ -1,15 +1,7 @@
-// src/tests/clients.test.ts
-//
-// Les fonctions de src/lib/clients.ts prennent le client Supabase en
-// paramètre : on simule ici le query builder chaînable (.select().is()...)
-// pour vérifier QUELLE requête est construite, sans réseau ni base réelle.
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { archiveClient, createClient, getClients, updateClient } from "../lib/clients";
 
-// Le query builder Supabase est "thenable" : chaque méthode renvoie le
-// même objet chaînable, et `await` déclenche .then() avec le résultat
-// final ({ data, error }), comme le vrai PostgrestFilterBuilder.
 function createQueryBuilder(result: { data: unknown; error: unknown }) {
   const builder = {
     select: vi.fn(() => builder),
@@ -25,10 +17,6 @@ function createQueryBuilder(result: { data: unknown; error: unknown }) {
   return builder;
 }
 
-// Le vrai type de SupabaseClient["from"] impose un PostgrestQueryBuilder
-// complet (url, headers, ...) que notre builder simulé ne réplique pas —
-// on type le paramètre en (table: string) => unknown, suffisant pour ce
-// que clients.ts en fait réellement (appeler .from(table) puis chaîner).
 function mockClient(from: (table: string) => unknown): SupabaseClient {
   return { from } as unknown as SupabaseClient;
 }

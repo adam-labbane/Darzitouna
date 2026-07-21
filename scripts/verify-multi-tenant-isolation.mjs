@@ -1,24 +1,10 @@
 #!/usr/bin/env node
-// scripts/verify-multi-tenant-isolation.mjs
-//
-// Preuve exécutable (pas un test Vitest — nécessite le vrai Supabase local
-// en marche) que la session Auth d'un utilisateur d'une huilerie ne permet
-// JAMAIS de lire ou modifier les données d'une autre huilerie, même en
-// requête directe sur la table (supabase.from("client")...), sans passer
-// par aucune fonction RPC dédiée.
-//
-// Usage : npx supabase start && npx supabase db reset && node scripts/verify-multi-tenant-isolation.mjs
-//
-// Les identifiants ci-dessous sont les clés de démo fixes du Supabase CLI
-// local (affichées en clair par `supabase status`) : ne JAMAIS pointer ce
-// script vers un projet Supabase réel/hébergé.
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = "http://127.0.0.1:54321";
 const ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
 
-// Mohamed — gérant de "Huilerie Mohamed" (huilerie A). Voir supabase/seed.sql.
 const USER_A_ID = "33333333-3333-3333-3333-333333333333";
 const USER_A_PIN = "1234";
 const HUILERIE_B_ID = "55555555-5555-5555-5555-555555555555";
@@ -55,7 +41,6 @@ async function main() {
   }
   ok("Session ouverte pour l'utilisateur de la huilerie A");
 
-  // 1. Lecture sans filtre : la huilerie B ne doit jamais apparaître.
   const { data: allClients, error: readError } = await supabase
     .from("client")
     .select("id, huilerie_id");
@@ -70,7 +55,6 @@ async function main() {
     ok(`Aucun client de la huilerie B visible (${allClients.length} client(s) vus, tous de la huilerie A)`);
   }
 
-  // 2. Lecture ciblée directe par id : RLS doit renvoyer 0 ligne, pas une erreur.
   const { data: targeted, error: targetedError } = await supabase
     .from("client")
     .select("id")
@@ -83,8 +67,6 @@ async function main() {
     ok("Requête ciblée sur le client de la huilerie B : 0 ligne (RLS bloque silencieusement)");
   }
 
-  // 3. Tentative d'écriture sur une ligne d'une autre huilerie : doit
-  // affecter 0 ligne (RLS bloque aussi UPDATE/DELETE, pas seulement SELECT).
   const { data: updated, error: updateError } = await supabase
     .from("client")
     .update({ telephone: "HACKED" })

@@ -1,10 +1,3 @@
-// src/components/SeasonSelect.tsx
-//
-// Sélecteur de saison dans l'en-tête — <select> natif (accessible par
-// construction : clavier, lecteur d'écran, pas de widget custom à
-// refaire) listant toutes les saisons de la huilerie. Change la saison
-// consultée via le contexte partagé (seasonConsultationContext.tsx) —
-// AppLayout affiche alors le bandeau de lecture seule si nécessaire.
 import { useSeasonConsultation } from "../hooks/useSeasonConsultation";
 
 export default function SeasonSelect() {

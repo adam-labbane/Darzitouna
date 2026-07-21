@@ -1,4 +1,3 @@
-// src/tests/depotSchema.test.ts
 import { describe, expect, it } from "vitest";
 import { depotSchema } from "../lib/depotSchema";
 
@@ -70,7 +69,6 @@ describe("depotSchema — achat", () => {
   });
 
   it("accepte un achat payé partiellement", () => {
-    // poids net = 85, total = 85 * 0.8 = 68
     const result = depotSchema.safeParse({
       ...basePrestation,
       is_achat_olives: true,

@@ -1,8 +1,3 @@
-// src/components/AppHeader.tsx
-//
-// Barre d'en-tête commune à toutes les pages connectées. Purement
-// présentationnelle : reçoit ses données en props, ne fait aucun appel
-// réseau elle-même (c'est AppLayout.tsx qui charge huilerie/saison).
 import { LogOut } from "lucide-react";
 import SeasonSelect from "./SeasonSelect";
 
@@ -22,12 +17,6 @@ export default function AppHeader({ huilerieNom, currentUser, onLogout }: AppHea
         </div>
       </div>
 
-      {/* Indicateur de connexion — statique pour l'instant, servira au
-          mode hors-ligne plus tard (badge "Hors ligne" / synchronisation
-          en attente). Masqué avant lg : à 768px (tablette portrait), la
-          sidebar (256px) ne laisse plus assez de place pour cet indicateur
-          décoratif en plus du sélecteur de saison et du bloc utilisateur —
-          voir la note de bug régression tablette dans le récapitulatif. */}
       <div className="hidden lg:flex items-center gap-2 shrink-0" role="status">
         <span className="w-2.5 h-2.5 rounded-full bg-[#2D6A4F]" aria-hidden="true" />
         <span className="text-sm text-gray-600">Connecté</span>

@@ -1,4 +1,3 @@
-// src/tests/saisonSchema.test.ts
 import { describe, expect, it } from "vitest";
 import { saisonSchema } from "../lib/saisonSchema";
 

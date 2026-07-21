@@ -1,4 +1,3 @@
-// src/tests/pagination.test.ts
 import { describe, expect, it } from "vitest";
 import { computePageCount, paginateItems } from "../lib/pagination";
 

@@ -1,9 +1,3 @@
-// src/components/Sidebar.tsx
-//
-// Menu latéral. Affiche getVisibleMenuItems(role) (src/lib/navigation.ts) —
-// aucune logique de rôle ici, uniquement de l'affichage. Réductible en
-// icônes seules (bouton en bas) ; les libellés restent dans le DOM
-// (sr-only) même réduit, pour rester utilisables au lecteur d'écran.
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -13,8 +7,6 @@ interface SidebarProps {
   role: string | undefined;
 }
 
-// Une entrée est "active" sur sa propre page ET ses sous-pages
-// (ex: /depots/nouveau doit garder "Dépôts" en surbrillance).
 function isItemActive(pathname: string, itemPath: string): boolean {
   return pathname === itemPath || pathname.startsWith(`${itemPath}/`);
 }

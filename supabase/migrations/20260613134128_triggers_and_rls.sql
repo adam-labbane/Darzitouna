@@ -1,8 +1,3 @@
--- ============================================================
--- TRIGGER 1 : Mise à jour automatique du stock des cuves
--- Vigile sur mvt_stock_huile → met à jour cuve.niveau_actuel
--- ============================================================
-
 CREATE OR REPLACE FUNCTION update_cuve_stock()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -18,31 +13,20 @@ AFTER INSERT ON mvt_stock_huile
 FOR EACH ROW
 EXECUTE FUNCTION update_cuve_stock();
 
--- ============================================================
--- TRIGGER 2 : Mise à jour du statut de la facture
--- Vigile sur reglement → recalcule si la facture est payée
--- Logique : si la somme des règlements >= montant_ttc → PAYE
---           si la somme > 0 mais < montant_ttc → PARTIEL
---           sinon → NON_PAYE
--- ============================================================
-
 CREATE OR REPLACE FUNCTION update_facture_statut()
 RETURNS TRIGGER AS $$
 DECLARE
   total_regle FLOAT;
   montant_facture FLOAT;
 BEGIN
-  -- On calcule la somme de tous les règlements de cette facture
   SELECT COALESCE(SUM(montant), 0) INTO total_regle
   FROM reglement
   WHERE facture_id = NEW.facture_id;
 
-  -- On récupère le montant TTC de la facture
   SELECT montant_ttc INTO montant_facture
   FROM facture_service
   WHERE id = NEW.facture_id;
 
-  -- On met à jour le statut selon le total réglé
   IF total_regle >= montant_facture THEN
     UPDATE facture_service
     SET statut_paiement = 'PAYE'
@@ -66,13 +50,6 @@ AFTER INSERT ON reglement
 FOR EACH ROW
 EXECUTE FUNCTION update_facture_statut();
 
--- ============================================================
--- RLS : Row Level Security
--- Chaque table avec huilerie_id est protégée.
--- Un utilisateur ne voit que les données de SON huilerie.
--- ============================================================
-
--- On active le RLS sur chaque table
 ALTER TABLE huilerie ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saison ENABLE ROW LEVEL SECURITY;
 ALTER TABLE utilisateur ENABLE ROW LEVEL SECURITY;
@@ -87,48 +64,34 @@ ALTER TABLE reglement ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vente_grignon ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mvt_stock_huile ENABLE ROW LEVEL SECURITY;
 
--- ============================================================
--- POLICIES : les règles d'accès
--- auth.jwt() ->> 'huilerie_id' = récupère l'huilerie_id
--- stocké dans le token JWT de l'utilisateur connecté
--- ============================================================
-
--- Huilerie : un utilisateur ne voit que sa propre huilerie
 CREATE POLICY "huilerie_isolation" ON huilerie
   FOR ALL
   USING (id::TEXT = auth.jwt() ->> 'huilerie_id');
 
--- Saison : ne voit que les saisons de son huilerie
 CREATE POLICY "saison_isolation" ON saison
   FOR ALL
   USING (huilerie_id::TEXT = auth.jwt() ->> 'huilerie_id');
 
--- Utilisateur : ne voit que les utilisateurs de son huilerie
 CREATE POLICY "utilisateur_isolation" ON utilisateur
   FOR ALL
   USING (huilerie_id::TEXT = auth.jwt() ->> 'huilerie_id');
 
--- Client : ne voit que les clients de son huilerie
 CREATE POLICY "client_isolation" ON client
   FOR ALL
   USING (huilerie_id::TEXT = auth.jwt() ->> 'huilerie_id');
 
--- Fournisseur
 CREATE POLICY "fournisseur_isolation" ON fournisseur
   FOR ALL
   USING (huilerie_id::TEXT = auth.jwt() ->> 'huilerie_id');
 
--- Acheteur grignon
 CREATE POLICY "acheteur_grignon_isolation" ON acheteur_grignon
   FOR ALL
   USING (huilerie_id::TEXT = auth.jwt() ->> 'huilerie_id');
 
--- Cuve
 CREATE POLICY "cuve_isolation" ON cuve
   FOR ALL
   USING (huilerie_id::TEXT = auth.jwt() ->> 'huilerie_id');
 
--- Depot : pas de huilerie_id directement, on passe par saison
 CREATE POLICY "depot_isolation" ON depot
   FOR ALL
   USING (
@@ -138,7 +101,6 @@ CREATE POLICY "depot_isolation" ON depot
     )
   );
 
--- Pressage : même logique, via saison
 CREATE POLICY "pressage_isolation" ON pressage
   FOR ALL
   USING (
@@ -148,7 +110,6 @@ CREATE POLICY "pressage_isolation" ON pressage
     )
   );
 
--- Facture : via saison
 CREATE POLICY "facture_isolation" ON facture_service
   FOR ALL
   USING (
@@ -158,7 +119,6 @@ CREATE POLICY "facture_isolation" ON facture_service
     )
   );
 
--- Reglement : via facture → saison
 CREATE POLICY "reglement_isolation" ON reglement
   FOR ALL
   USING (
@@ -171,7 +131,6 @@ CREATE POLICY "reglement_isolation" ON reglement
     )
   );
 
--- Vente grignon : via saison
 CREATE POLICY "vente_grignon_isolation" ON vente_grignon
   FOR ALL
   USING (
@@ -181,7 +140,6 @@ CREATE POLICY "vente_grignon_isolation" ON vente_grignon
     )
   );
 
--- Mvt stock : via cuve → huilerie
 CREATE POLICY "mvt_stock_isolation" ON mvt_stock_huile
   FOR ALL
   USING (

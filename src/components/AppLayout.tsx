@@ -1,9 +1,3 @@
-// src/components/AppLayout.tsx
-//
-// Layout partagé par toutes les pages connectées : sidebar + en-tête +
-// zone de contenu (<Outlet/> de React Router). Monté UNE SEULE FOIS par
-// la route parent dans App.tsx — les pages elles-mêmes n'ont plus besoin
-// de connaître le menu ni l'en-tête, seulement leur propre contenu.
 import { useEffect, useState } from "react";
 import { Navigate, Outlet, useNavigate } from "react-router";
 import { supabase } from "../lib/supabase";
@@ -32,30 +26,19 @@ export default function AppLayout() {
       .then((nom) => {
         if (!cancelled && nom) setHuilerieNom(nom);
       })
-      .catch(() => {
-        // Non bloquant : l'en-tête garde le nom par défaut.
-      });
+      .catch(() => {});
 
     return () => {
       cancelled = true;
     };
   }, [huilerieId]);
 
-  // Filet de sécurité : la route parent (App.tsx) enveloppe déjà ce
-  // layout dans <AppGuard requireAuth>, mais on ne suppose jamais qu'un
-  // état externe (localStorage) reste valide entre deux rendus.
   if (!currentUser) {
     return <Navigate to="/" replace />;
   }
 
   const handleLogout = async () => {
-    try {
-      await endSession(supabase);
-    } catch {
-      // On déconnecte quand même localement si l'appel réseau échoue :
-      // rester "connecté" alors que l'utilisateur vient de demander à
-      // partir serait pire qu'une session qui expirera de toute façon.
-    }
+    await endSession(supabase).catch(() => {});
     logout();
     navigate("/", { replace: true });
   };

@@ -1,4 +1,3 @@
-// src/tests/factureDocument.test.ts
 import { describe, expect, it } from "vitest";
 import { buildFactureDocument } from "../lib/factureDocument";
 import type { FactureWithRelations } from "../types/facture";

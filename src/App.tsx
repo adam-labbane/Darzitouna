@@ -1,4 +1,3 @@
-// src/App.tsx
 import { createBrowserRouter, RouterProvider } from "react-router";
 import AppGuard from "./components/AppGuard";
 import AppLayout from "./components/AppLayout";
@@ -17,12 +16,10 @@ import ModuleAVenir from "./pages/ModuleAVenir";
 
 const router = createBrowserRouter([
   {
-    // Page de configuration initiale — accessible librement
     path: "/setup",
     element: <Setup />,
   },
   {
-    // Page de login — protégée par AppGuard (vérifie que l'huilerie existe)
     path: "/",
     element: (
       <AppGuard>
@@ -31,9 +28,6 @@ const router = createBrowserRouter([
     ),
   },
   {
-    // Toutes les pages connectées partagent UNE SEULE garde d'authentification
-    // et UN SEUL layout (sidebar + en-tête), montés ici plutôt que répétés
-    // dans chaque route. AppLayout rend <Outlet/> pour la page active.
     element: (
       <AppGuard requireAuth>
         <AppLayout />

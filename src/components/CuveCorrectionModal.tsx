@@ -1,11 +1,3 @@
-// src/components/CuveCorrectionModal.tsx
-//
-// Correction manuelle du niveau d'une cuve — réservée au GERANT (le
-// parent, Stocks.tsx, ne rend ce composant que pour ce rôle ; la vraie
-// protection est le trigger enforce_correction_role côté base, voir
-// supabase/migrations/20260721090000_cuve_stock_safety.sql). L'opérateur
-// saisit le niveau RÉELLEMENT constaté (pas un delta) : le delta à
-// envoyer est calculé pour lui, en clair, avant validation.
 import { useState, type FormEvent } from "react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { computeCorrectionDelta, formatLiters } from "../lib/cuveDisplay";

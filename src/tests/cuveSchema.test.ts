@@ -1,4 +1,3 @@
-// src/tests/cuveSchema.test.ts
 import { describe, expect, it } from "vitest";
 import { cuveSchema } from "../lib/cuveSchema";
 

@@ -1,15 +1,7 @@
-// src/lib/personnelSchema.ts
-//
-// Validation du formulaire personnel (OWASP). Défense en profondeur :
-// doublée côté base par create_utilisateur()/reset_utilisateur_pin()
-// (migration 20260721150000_configuration.sql), qui revalident le
-// format du PIN indépendamment de ce schéma.
 import { z } from "zod";
 
 export const ROLES = ["GERANT", "OPERATEUR"] as const;
 
-// Source unique du format PIN — réutilisé par la création et la
-// réinitialisation, pour ne jamais faire diverger la règle.
 export const pinSchema = z
   .string()
   .regex(/^\d{4}$/, "Le code PIN doit comporter exactement 4 chiffres");

@@ -1,8 +1,3 @@
-// src/tests/cuves.test.ts
-//
-// Même approche que src/tests/clients.test.ts : un query builder Supabase
-// simulé et chaînable, pour vérifier quelle requête est construite sans
-// réseau ni base réelle.
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
@@ -19,8 +14,6 @@ function createQueryBuilder(result: { data: unknown; error: unknown }) {
     is: vi.fn(() => builder),
     order: vi.fn(() => builder),
     eq: vi.fn(() => builder),
-    // Les paramètres servent uniquement à typer .mock.calls[0][0], utilisé
-    // plus bas pour inspecter le payload envoyé.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     insert: vi.fn((_payload: Record<string, unknown>) => builder),
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -96,10 +89,6 @@ describe("updateCuve", () => {
     expect(builder.eq).toHaveBeenCalledWith("id", "cuve-1");
   });
 
-  // Bug de recette : baisser la capacité sous le niveau actuel doit être
-  // rejeté par la contrainte CHECK cuve_niveau_within_capacity côté base
-  // (vérifié en direct : PATCH -> 400 "23514 violates check constraint").
-  // updateCuve() doit propager cette erreur, pas l'avaler.
   it("propage l'erreur si la contrainte CHECK refuse une capacité sous le niveau actuel", async () => {
     const builder = createQueryBuilder({
       data: null,
@@ -143,11 +132,6 @@ describe("archiveCuve", () => {
     );
   });
 
-  // Bug de recette #2 : un OPERATEUR a réussi à archiver une cuve — le
-  // trigger protect_cuve_deletion ne vérifiait jamais le rôle. Corrigé
-  // dans supabase/migrations/20260721120000_cuve_archiving_role_fix.sql.
-  // archiveCuve() doit propager cette erreur telle quelle, jamais
-  // l'avaler ni réussir silencieusement.
   it("propage l'erreur si le trigger refuse (rôle non GERANT)", async () => {
     const builder = createQueryBuilder({
       data: null,
@@ -219,13 +203,6 @@ describe("correctCuveLevel", () => {
     ).rejects.toThrow("Seul un gérant peut effectuer une correction manuelle de niveau");
   });
 
-  // Bug de recette #1 signalé : "un niveau supérieur à la capacité est
-  // accepté". Reproduit en direct sous plusieurs angles (UI avec bouton
-  // désactivé, appel API brut, édition de la capacité) sans jamais
-  // parvenir à corrompre les données — le trigger update_cuve_stock
-  // rejette bien tout dépassement (vérifié : PATCH -> 400 P0001). Ce test
-  // fige le contrat côté client : correctCuveLevel() ne doit jamais
-  // avaler cette erreur.
   it("propage l'erreur si le trigger refuse un niveau qui dépasserait la capacité", async () => {
     const builder = createQueryBuilder({
       data: null,

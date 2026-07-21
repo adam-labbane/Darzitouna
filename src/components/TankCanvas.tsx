@@ -1,7 +1,3 @@
-// src/components/TankCanvas.tsx
-//
-// Vue d'ensemble de toutes les cuves de l'huilerie : grille responsive de
-// TankGauge + légende des couleurs en bas à gauche.
 import { FILL_COLOR_HEX, FILL_COLOR_LABELS, type FillColor } from "../lib/cuveDisplay";
 import type { Cuve } from "../types/cuve";
 import TankGauge from "./TankGauge";
@@ -29,9 +25,6 @@ export default function TankCanvas({ cuves }: TankCanvasProps) {
         ))}
       </div>
 
-      {/* Légende en bas, alignée à gauche — la couleur seule ne porte
-          jamais l'information (voir aussi le % en texte sur chaque
-          jauge) : elle sert de renfort visuel rapide. */}
       <div className="flex flex-wrap gap-x-6 gap-y-2 mt-8 pt-4 border-t border-gray-100">
         <p className="w-full text-xs font-semibold text-gray-500 uppercase">Légende</p>
         {LEGEND_ORDER.map((color) => (

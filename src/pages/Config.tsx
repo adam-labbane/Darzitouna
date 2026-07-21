@@ -1,13 +1,3 @@
-// src/pages/Config.tsx
-//
-// Module Configuration : deux onglets, Saisons et Personnel, tous deux
-// réservés au GERANT. Le masquage du lien dans le menu
-// (src/lib/navigation.ts) n'est qu'un confort UX — la vraie protection
-// est côté base (triggers enforce_gerant_only_saison/utilisateur,
-// migration 20260721150000_configuration.sql) : même si cette page
-// s'affichait pour un OPERATEUR, toute écriture serait refusée par la
-// base. La garde ci-dessous (redirection immédiate) évite simplement
-// d'afficher un écran de gestion inutile à qui n'a pas le rôle.
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router";
 import { CalendarRange } from "lucide-react";
@@ -49,8 +39,6 @@ export default function Config() {
 
   const [tab, setTab] = useState<Tab>("saisons");
 
-  // Nom de la huilerie : nécessaire à l'en-tête du bilan de saison
-  // (SeasonSummaryView) — non bloquant si le chargement échoue.
   const [huilerieNom, setHuilerieNom] = useState("Huilerie");
   useEffect(() => {
     if (!huilerieId) return;
@@ -60,29 +48,20 @@ export default function Config() {
         if (!cancelled && nom) setHuilerieNom(nom);
       })
       .catch(() => {
-        // Non bloquant : le bilan affichera juste le nom par défaut.
       });
     return () => {
       cancelled = true;
     };
   }, [huilerieId]);
 
-  // ---- Saisons ----
-  // Liste des saisons : lue depuis le contexte partagé (même source que
-  // le sélecteur de l'en-tête) plutôt que re-fetchée indépendamment ici —
-  // un seul endroit à rafraîchir après création/activation/clôture, pas
-  // de risque de désynchronisation entre cette page et le sélecteur.
   const { allSaisons: saisons, loading: saisonsLoading, refreshSaisons } = useSeasonConsultation();
   const [saisonModalOpen, setSaisonModalOpen] = useState(false);
   const [editingSaison, setEditingSaison] = useState<Saison | null>(null);
   const [saisonActionError, setSaisonActionError] = useState("");
 
-  // Clôture de saison.
   const [closeSeasonTarget, setCloseSeasonTarget] = useState<Saison | null>(null);
   const [closureMessage, setClosureMessage] = useState("");
 
-  // Bilan en lecture seule (n'importe quelle saison, pas seulement au
-  // moment de la clôture).
   const [viewingBilanSaison, setViewingBilanSaison] = useState<Saison | null>(null);
   const [bilan, setBilan] = useState<SeasonSummaryData | null>(null);
   const [bilanLoading, setBilanLoading] = useState(false);
@@ -145,7 +124,6 @@ export default function Config() {
     }
   };
 
-  // ---- Personnel ----
   const [utilisateurs, setUtilisateurs] = useState<Utilisateur[]>([]);
   const [personnelLoading, setPersonnelLoading] = useState(true);
   const [personnelError, setPersonnelError] = useState("");
@@ -222,10 +200,6 @@ export default function Config() {
     }
   };
 
-  // ---- Garde de page : réservé au GERANT ----
-  // Filet de sécurité côté React (le lien est déjà masqué dans le menu) —
-  // la vraie protection reste les triggers côté base, voir l'en-tête de
-  // ce fichier.
   if (currentUser?.role !== "GERANT") {
     return <Navigate to="/dashboard" replace />;
   }
@@ -285,8 +259,6 @@ export default function Config() {
                       <div className="flex-1 min-w-[160px]">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-semibold text-gray-900">{saison.nom}</p>
-                          {/* Statut jamais porté par la seule couleur : le
-                              libellé texte accompagne toujours la pastille. */}
                           {estCloturee ? (
                             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-300">
                               Clôturée
@@ -320,8 +292,6 @@ export default function Config() {
                         Voir le bilan
                       </button>
 
-                      {/* Une saison clôturée est en lecture seule : plus de
-                          Modifier/Activer/Désactiver, le bilan est figé. */}
                       {!estCloturee && (
                         <>
                           <button

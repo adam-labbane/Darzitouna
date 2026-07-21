@@ -1,11 +1,3 @@
-// src/components/SeasonSummaryView.tsx
-//
-// Rendu visuel du bilan de saison — pur composant d'affichage (données
-// déjà prêtes via buildSeasonSummary(), src/lib/seasonSummary.ts). Même
-// principe de séparation données/rendu que TicketPreview.tsx/
-// FacturePreview.tsx : un futur générateur PDF réel consommera la même
-// SeasonSummaryData sans toucher à ce composant. .print-area (src/index.css)
-// est la seule chose visible à l'impression (window.print()).
 import { formatLiters } from "../lib/cuveDisplay";
 import type { SeasonSummaryData } from "../lib/seasonSummary";
 

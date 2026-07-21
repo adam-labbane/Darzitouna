@@ -1,4 +1,3 @@
-// src/tests/navigation.test.ts
 import { describe, expect, it } from "vitest";
 import { getVisibleMenuItems, MENU_ITEMS } from "../lib/navigation";
 

@@ -1,7 +1,3 @@
-// src/types/cuve.ts
-//
-// Reflète la table `cuve` (supabase/migrations/20260613130448_create_tables.sql
-// + 20260721090000_cuve_stock_safety.sql).
 export type TypeHuile = "EXTRA" | "VIERGE" | "LAMPANTE";
 
 export interface Cuve {

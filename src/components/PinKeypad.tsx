@@ -1,10 +1,3 @@
-// src/components/PinKeypad.tsx
-//
-// Pavé numérique tactile réutilisable pour la saisie d'un code PIN.
-// Composant contrôlé : il ne connaît ni la longueur "métier" du PIN au-delà
-// de PIN_LENGTH, ni la logique de vérification — il expose juste `value` /
-// `onChange`, comme un <input>. Cela permet de le réutiliser tel quel pour
-// la définition d'un nouveau PIN dans la gestion du personnel.
 import { appendDigit, removeLastDigit, PIN_LENGTH } from "../lib/pin";
 
 interface PinKeypadProps {
@@ -21,8 +14,6 @@ const DIGIT_ROWS = [
   ["7", "8", "9"],
 ];
 
-// Cible tactile 64x64px (au-delà du minimum RGAA de 44x44px) pour rester
-// utilisable avec des mains grasses et sans viser précisément.
 const KEYPAD_BUTTON_BASE =
   "w-16 h-16 rounded-2xl flex items-center justify-center font-bold select-none " +
   "bg-white border-2 border-gray-200 text-[#1B4332] " +
@@ -53,7 +44,6 @@ export default function PinKeypad({
 
   return (
     <div className={`flex flex-col items-center gap-6 ${shake ? "animate-shake" : ""}`}>
-      {/* Indicateurs visuels : jamais les chiffres eux-mêmes ne sont affichés */}
       <div
         className="flex gap-4"
         role="status"

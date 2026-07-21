@@ -1,11 +1,3 @@
-// src/components/TicketPreview.tsx
-//
-// Rendu visuel du ticket — pur composant d'affichage (données déjà
-// prêtes via buildTicketData(), src/lib/ticket.ts). La classe
-// print-ticket-area est ciblée par la feuille de style @media print
-// (src/index.css) : c'est la SEULE chose visible quand on imprime,
-// qu'il s'agisse de l'aperçu navigateur actuel ou d'une future
-// implémentation Bluetooth qui réutiliserait le même TicketData.
 import type { TicketData } from "../lib/ticket";
 
 interface TicketPreviewProps {

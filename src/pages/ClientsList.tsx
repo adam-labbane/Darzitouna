@@ -1,12 +1,3 @@
-// src/pages/ClientsList.tsx
-//
-// Liste des clients de l'huilerie : recherche, création, archivage. Le
-// clic sur un client mène à sa fiche détaillée (/clients/:id,
-// ClientProfil.tsx) — l'édition et l'historique complet y vivent
-// désormais, ce n'est plus le rôle de cette liste. La logique métier
-// (accès données, validation) est déléguée à src/lib/clients.ts,
-// src/lib/clientSchema.ts et src/lib/clientProfile.ts — cette page
-// orchestre l'UI et les états de chargement/erreur.
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Users } from "lucide-react";
@@ -28,11 +19,6 @@ import Pagination from "../components/Pagination";
 export default function ClientsList() {
   const navigate = useNavigate();
   const huilerieId = getHuilerieId();
-  // Décision côté React : uniquement pour ne pas AFFICHER un bouton
-  // interdit. La vraie protection est le trigger protect_client_archiving
-  // côté base (voir supabase/migrations/20260720100000_client_soft_delete.sql) —
-  // un opérateur qui appellerait l'API directement serait bloqué là-bas,
-  // pas ici.
   const isGerant = getCurrentUser()?.role === "GERANT";
 
   const [clients, setClients] = useState<Client[]>([]);
@@ -47,12 +33,6 @@ export default function ClientsList() {
   const [archiveTarget, setArchiveTarget] = useState<Client | null>(null);
   const [archiveError, setArchiveError] = useState("");
 
-  // Total facturé et reste dû de chaque client, calculés (jamais
-  // client.solde_compte seul — voir clientProfileCalculations.ts).
-  // Chargés une fois indépendamment de la recherche (ne dépend pas du
-  // texte tapé) ; non bloquant si l'appel échoue, les montants affichés
-  // retombent alors sur le seul solde_compte via
-  // computeClientTotals(..., financials[id] ?? vide, ...).
   const [financials, setFinancials] = useState<Record<string, ClientFinancials>>({});
 
   useEffect(() => {
@@ -62,17 +42,12 @@ export default function ClientsList() {
         if (!cancelled) setFinancials(data);
       })
       .catch(() => {
-        // Non bloquant : la liste reste utilisable, le reste dû affiché
-        // se limite alors au solde_compte brut pour ces clients.
       });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // Un seul calcul (computeClientTotals) fournit total facturé ET reste
-  // dû à partir des mêmes données déjà chargées en batch — jamais deux
-  // calculs séparés qui pourraient diverger.
   const totalsFor = (client: Client): ClientTotals =>
     computeClientTotals(
       [],
@@ -81,9 +56,6 @@ export default function ClientsList() {
       client.solde_compte,
     );
 
-  // Réutilisée après une création/archivage (event handlers) — aucun
-  // souci à y appeler setState synchrone puisque ce n'est jamais invoqué
-  // directement depuis un effect (voir plus bas).
   const fetchClients = useCallback(async (search: string) => {
     try {
       const data = await getClients(supabase, search);
@@ -96,13 +68,6 @@ export default function ClientsList() {
     }
   }, []);
 
-  // L'effet n'appelle PAS fetchClients() : eslint-plugin-react-hooks trace
-  // le fait que cette fonction appelle setState et refuse tout appel
-  // depuis un effect, même après un await. Le pattern accepté est la
-  // chaîne .then()/.catch()/.finally() écrite directement ici (même
-  // principe que le chargement des utilisateurs dans Login.tsx) : les
-  // setState sont dans des callbacks de promesse, pas dans le corps
-  // synchrone de l'effect.
   useEffect(() => {
     let cancelled = false;
     getClients(supabase, debouncedSearch)
@@ -128,9 +93,6 @@ export default function ClientsList() {
 
   const handleSearchChange = (value: string) => {
     setSearchInput(value);
-    // Retour visuel immédiat au clavier, avant même la fin du debounce.
-    // Geste utilisateur direct : un setState ici n'est pas dans un effect,
-    // donc parfaitement normal (contrairement à l'appel depuis l'effet).
     setLoading(true);
   };
 
@@ -138,8 +100,6 @@ export default function ClientsList() {
     if (!huilerieId) return;
     await createClient(supabase, huilerieId, data);
     setFormOpen(false);
-    // Pas de setLoading(true) : la liste reste affichée telle quelle
-    // pendant le rafraîchissement, sans flash de skeleton.
     await fetchClients(debouncedSearch);
   };
 
@@ -208,8 +168,6 @@ export default function ClientsList() {
                     <p className="text-sm text-gray-500">{client.telephone ?? "Pas de téléphone"}</p>
                   </button>
 
-                  {/* Deux valeurs distinctes, chacune avec son libellé —
-                      jamais un montant seul sans savoir ce qu'il représente. */}
                   <div className="flex gap-4">
                     <div className="text-right">
                       <p className="text-xs text-gray-400">Facturé</p>

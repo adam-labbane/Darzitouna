@@ -1,38 +1,15 @@
 #!/usr/bin/env node
-// scripts/test-cuve-security-bugs.mjs
-//
-// Preuve exécutable des deux bugs de sécurité trouvés en recette sur le
-// module Cuves et de leur correction :
-//
-// Bug 1 — un niveau supérieur à la capacité était censé être accepté et
-// corrompre la capacité. Non reproduit après investigation (voir le
-// plan de correction des bogues) : le trigger update_cuve_stock
-// (bornes [0, capacite_max]) et la contrainte CHECK
-// cuve_niveau_within_capacity refusent systématiquement, testés ici
-// sous deux angles (correction hors bornes, édition de la capacité
-// sous le niveau actuel).
-//
-// Bug 2 — un OPERATEUR pouvait archiver une cuve : protect_cuve_deletion
-// ne vérifiait jamais le rôle. Corrigé dans la migration
-// 20260721120000_cuve_archiving_role_fix.sql.
-//
-// Usage : npx supabase start && npx supabase db reset && node scripts/test-cuve-security-bugs.mjs
-//
-// Clés de démo fixes du Supabase CLI local — ne JAMAIS pointer ce
-// script vers un projet Supabase réel/hébergé.
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = "http://127.0.0.1:54321";
 const ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
 
-const MOHAMED_ID = "33333333-3333-3333-3333-333333333333"; // GERANT
-const AHMED_ID = "44444444-4444-4444-4444-444444444444"; // OPERATEUR
+const MOHAMED_ID = "33333333-3333-3333-3333-333333333333";
+const AHMED_ID = "44444444-4444-4444-4444-444444444444";
 const SAISON_A = "22222222-2222-2222-2222-222222222222";
 
-// Cuve 1 (seed) : capacite_max 2000, niveau_actuel 1500.
 const CUVE_1_ID = "cccccccc-cccc-cccc-cccc-ccccccccccc1";
-// Cuve 4 (seed) : vide (niveau_actuel 0).
 const CUVE_4_ID = "cccccccc-cccc-cccc-cccc-ccccccccccc4";
 
 async function deriveAuthPassword(userId, pin) {
@@ -66,7 +43,6 @@ async function loginAs(userId, pin) {
 async function testBug1CorrectionDepasseCapacite() {
   const mohamed = await loginAs(MOHAMED_ID, "1234");
 
-  // Cuve 1 : 1500 L actuels, capacité 2000 L. +1500 -> 3000 L, dépasse.
   const { error } = await mohamed.from("mvt_stock_huile").insert({
     cuve_id: CUVE_1_ID,
     saison_id: SAISON_A,
@@ -100,7 +76,6 @@ async function testBug1CorrectionDepasseCapacite() {
 async function testBug1EditionCapaciteSousNiveau() {
   const mohamed = await loginAs(MOHAMED_ID, "1234");
 
-  // Tente de baisser la capacité de Cuve 1 (1500 L actuels) à 1000 L.
   const { error } = await mohamed
     .from("cuve")
     .update({ capacite_max: 1000 })
@@ -120,8 +95,6 @@ async function testBug1EditionCapaciteSousNiveau() {
 async function testBug2ArchivageParOperateur() {
   const ahmed = await loginAs(AHMED_ID, "0000");
 
-  // Cuve 4 est vide : la seule règle qui pourrait bloquer l'archivage
-  // (cuve non vide) ne s'applique pas ici — seul le rôle doit protéger.
   const { data, error } = await ahmed
     .from("cuve")
     .update({ deleted_at: new Date().toISOString() })

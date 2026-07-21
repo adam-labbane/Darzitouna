@@ -1,16 +1,8 @@
-// src/components/SaisonFormModal.tsx
-//
-// Modal de création ET d'édition d'une saison — même pattern que
-// CuveFormModal.tsx (rendu conditionnel par le parent, pas de prop
-// `open`, useFocusTrap, validation Zod au submit). N'expose jamais
-// is_active : l'activation/désactivation est un geste séparé (boutons
-// dédiés dans Config.tsx), pas un champ de ce formulaire.
 import { useState, type FormEvent } from "react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { saisonSchema, type SaisonFormInput } from "../lib/saisonSchema";
 
 interface SaisonFormModalProps {
-  // Présent = mode édition (pré-remplit le formulaire), absent = création.
   initialValues?: {
     nom: string;
     date_debut: string | null;

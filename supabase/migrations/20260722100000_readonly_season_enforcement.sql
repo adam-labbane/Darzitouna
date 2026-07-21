@@ -1,21 +1,3 @@
--- ============================================================
--- RENFORCEMENT : impossible de rattacher une écriture à une saison qui
--- n'est pas active — même via un appel API direct.
---
--- Le mode "consultation en lecture seule" côté React (sélecteur de
--- saison dans l'en-tête) masque les boutons de création quand la
--- saison consultée n'est pas l'active. C'est un confort d'ergonomie,
--- PAS la protection réelle : cette migration ferme les 4 chemins
--- d'écriture réels côté base.
---
--- Deux tables reçoivent un saison_id directement fourni par le client
--- (pas dérivé côté serveur) : `depot` et `mvt_stock_huile` (correction
--- manuelle de cuve) — un trigger générique suffit pour les deux.
--- `pressage`/`facture_service` dérivent déjà leur saison_id en interne
--- (create_pressage/set_facture_derived_fields) : on y ajoute la même
--- vérification directement dans leur fonction, pas un nouveau trigger.
--- ============================================================
-
 CREATE OR REPLACE FUNCTION enforce_saison_active_for_write()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -26,11 +8,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Nommage alphabétique délibéré : "enforce_saison_active" précède
--- "enforce_user"/"set_ticket_number" sur la table depot, donc rejette
--- avant même que set_depot_ticket_number() n'incrémente
--- saison.next_ticket_seq — pas de numéro de ticket "brûlé" pour un
--- insert refusé.
 CREATE TRIGGER on_depot_insert_enforce_saison_active
 BEFORE INSERT ON depot
 FOR EACH ROW
@@ -41,13 +18,6 @@ BEFORE INSERT ON mvt_stock_huile
 FOR EACH ROW
 EXECUTE FUNCTION enforce_saison_active_for_write();
 
--- ============================================================
--- create_pressage() : ajoute la vérification de saison active juste
--- après avoir relu le dépôt (v_depot.saison_id), avant tout calcul —
--- reproduction complète de la fonction (migration
--- 20260721130000_pressage_creation.sql), seule cette vérification est
--- nouvelle.
--- ============================================================
 CREATE OR REPLACE FUNCTION create_pressage(
   p_depot_id UUID,
   p_cuve_id UUID,
@@ -66,8 +36,6 @@ BEGIN
     RAISE EXCEPTION 'La quantité d''huile doit être supérieure à 0';
   END IF;
 
-  -- RLS filtre déjà par huilerie : un depot_id d'une autre huilerie (ou
-  -- inexistant) ne renvoie simplement aucune ligne.
   SELECT * INTO v_depot FROM depot WHERE id = p_depot_id;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Dépôt introuvable';
@@ -89,8 +57,6 @@ BEGIN
   v_rendement := round((p_quantite_huile_kg / v_depot.poids_olives_kg * 100)::numeric, 2);
 
   IF v_depot.is_achat_olives THEN
-    -- L'huilerie presse ses propres olives (déjà achetées) : elle ne se
-    -- facture pas elle-même de service.
     v_montant := 0;
   ELSE
     SELECT config_prix_kilo_service INTO v_prix_kilo
@@ -107,9 +73,6 @@ BEGIN
   )
   RETURNING * INTO v_pressage;
 
-  -- Déclenche update_cuve_stock : si la cuve n'a pas assez de place,
-  -- l'exception levée ici annule aussi l'INSERT du pressage ci-dessus
-  -- (même transaction).
   INSERT INTO mvt_stock_huile (cuve_id, saison_id, type, quantite_delta, pressage_id)
   VALUES (p_cuve_id, v_depot.saison_id, 'PROD', p_quantite_huile_kg, v_pressage.id);
 
@@ -117,12 +80,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY INVOKER;
 
--- ============================================================
--- set_facture_derived_fields() : ajoute la vérification de saison
--- active juste après avoir résolu v_saison_id — reproduction complète
--- (migration 20260721140000_facturation.sql), seule cette vérification
--- est nouvelle.
--- ============================================================
 CREATE OR REPLACE FUNCTION set_facture_derived_fields()
 RETURNS TRIGGER AS $$
 DECLARE

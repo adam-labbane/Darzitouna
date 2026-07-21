@@ -1,4 +1,3 @@
-// src/tests/factureCalculations.test.ts
 import { describe, expect, it } from "vitest";
 import {
   computeMontantTotal,

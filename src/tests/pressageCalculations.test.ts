@@ -1,4 +1,3 @@
-// src/tests/pressageCalculations.test.ts
 import { describe, expect, it } from "vitest";
 import {
   computeMontantService,

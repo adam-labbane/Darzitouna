@@ -1,10 +1,3 @@
-// src/hooks/usePagination.ts
-//
-// Pagination côté client d'une liste déjà chargée. La page courante est
-// dérivée (clampée entre 1 et pageCount) plutôt que synchronisée par un
-// effect : si `items` rétrécit (ex. une recherche filtre la liste) alors
-// que la page mémorisée est devenue trop grande, currentPage retombe
-// automatiquement sans setState supplémentaire.
 import { useState } from "react";
 import { computePageCount, paginateItems } from "../lib/pagination";
 

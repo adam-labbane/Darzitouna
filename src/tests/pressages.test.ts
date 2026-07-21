@@ -1,8 +1,3 @@
-// src/tests/pressages.test.ts
-//
-// Même approche que src/tests/cuves.test.ts : un query builder Supabase
-// simulé et chaînable, pour vérifier quelle requête est construite sans
-// réseau ni base réelle.
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createPressage, getDepotsEnAttente, getPressages } from "../lib/pressages";
@@ -22,9 +17,6 @@ function mockClient(from: (table: string) => unknown): SupabaseClient {
 }
 
 describe("getDepotsEnAttente", () => {
-  // pressage(id) s'embarque comme un objet unique ou null (relation 1-à-1
-  // via la contrainte UNIQUE(depot_id)), pas un tableau — voir le
-  // commentaire de getDepotsEnAttente dans pressages.ts.
   it("exclut les dépôts déjà pressés (pressage non null)", async () => {
     const builder = createQueryBuilder({
       data: [

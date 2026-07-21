@@ -1,21 +1,8 @@
-// src/lib/seasonClosure.ts
-//
-// Accès aux données de la clôture de saison. Client Supabase injecté en
-// paramètre (même pattern que factures.ts/pressages.ts) : testable sans
-// réseau.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Saison } from "../types/saison";
 import type { SeasonSummaryRawData } from "./seasonSummary";
 import type { SaisonFormInput } from "./saisonSchema";
 
-/**
- * Charge les données brutes du bilan d'une saison (dépôts, pressages,
- * factures + règlements embarqués, cuves de la huilerie) — chaque
- * requête est filtrée par RLS, aucun risque d'agréger les données d'une
- * autre huilerie. `saison` est déjà connue de l'appelant (ligne déjà
- * chargée dans Config.tsx) : on évite un aller-retour supplémentaire
- * pour la relire.
- */
 export async function getSeasonSummaryData(
   client: SupabaseClient,
   saison: Saison,
@@ -65,14 +52,6 @@ export interface CloseSeasonResult {
   clientsProtegesCount: number;
 }
 
-/**
- * Clôture la saison en cours et ouvre la nouvelle, via la fonction
- * PostgreSQL transactionnelle close_season_and_open_new (migration
- * 20260721160000_season_closure.sql) : vidage tracé du stock (jamais un
- * UPDATE direct de cuve.niveau_actuel), archivage protégé des clients
- * (jamais un client à impayés ou à solde non nul), clôture + activation
- * en une seule transaction — si une étape échoue, rien n'est appliqué.
- */
 export async function closeSeasonAndOpenNew(
   client: SupabaseClient,
   input: CloseSeasonInput,

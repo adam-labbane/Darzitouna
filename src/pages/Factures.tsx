@@ -1,11 +1,3 @@
-// src/pages/Factures.tsx
-//
-// Module Facturation : liste des factures de la saison + génération
-// depuis un pressage non facturé + détail (aperçu + règlements). La
-// logique métier (accès données, calculs d'affichage) est déléguée à
-// src/lib/factures.ts, src/lib/factureCalculations.ts et
-// src/lib/factureDocument.ts — cette page orchestre l'UI, même
-// architecture que Pressages.tsx/Stocks.tsx.
 import { useEffect, useState } from "react";
 import { Receipt } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -41,7 +33,6 @@ export default function Factures() {
           if (!cancelled && nom) setHuilerieNom(nom);
         })
         .catch(() => {
-          // Non bloquant : l'aperçu affichera juste le nom par défaut.
         });
     }
 
@@ -94,10 +85,6 @@ export default function Factures() {
   const [detailError, setDetailError] = useState("");
   const [reglementOpen, setReglementOpen] = useState(false);
 
-  // setDetailLoading(true) part des gestionnaires qui posent
-  // selectedFactureId (clic sur une facture, création réussie), pas de
-  // l'effect lui-même — même contrainte react-hooks/set-state-in-effect
-  // déjà rencontrée dans FactureCreationModal.tsx/DepotsList.tsx.
   useEffect(() => {
     if (!selectedFactureId) return;
     let cancelled = false;
@@ -129,10 +116,6 @@ export default function Factures() {
   const handleReglementSubmit = async (data: { montant: number; mode: ModeReglement; note?: string }) => {
     if (!selectedFactureId) return;
     await addReglement(supabase, { facture_id: selectedFactureId, ...data });
-    // Le modal ne se ferme qu'une fois la facture rechargée : sinon
-    // l'aperçu sous-jacent (jamais démonté, seulement masqué par le
-    // modal) redeviendrait visible un instant avec le statut/reste dû
-    // encore périmés, avant que le re-fetch ne termine.
     const [refreshedFacture] = await Promise.all([
       getFactureById(supabase, selectedFactureId),
       refreshFactures(),
@@ -202,8 +185,6 @@ export default function Factures() {
                   </p>
                   <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 mt-2 text-sm">
                     <span className="font-mono text-gray-700">{facture.montant_ttc.toFixed(2)} DT</span>
-                    {/* Le statut n'est jamais porté par la seule couleur :
-                        le libellé texte accompagne toujours la pastille. */}
                     <span className="flex items-center gap-2" role="status">
                       <span
                         className="w-2.5 h-2.5 rounded-full"

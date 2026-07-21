@@ -1,10 +1,3 @@
-// src/components/BottomNav.tsx
-//
-// Navigation mobile (< md), remplace Sidebar.tsx sous 768px. Réutilise
-// getVisibleMenuItems(role) tel quel (aucune deuxième liste de priorités
-// à maintenir) : les 4 premiers éléments en barre basse atteignable au
-// pouce, le reste dans une feuille "Plus" (focus trap réutilisant
-// useFocusTrap, comme les autres modales de l'app).
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { Menu, X } from "lucide-react";

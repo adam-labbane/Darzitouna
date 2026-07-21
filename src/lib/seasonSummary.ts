@@ -1,10 +1,3 @@
-// src/lib/seasonSummary.ts
-//
-// Agrégation pure des données brutes d'une saison en un bilan affichable
-// (SeasonSummaryView.tsx). Même principe de séparation données/rendu que
-// buildTicketData()/buildFactureDocument(), mais avec de vraies
-// réductions (sommes, comptes, moyenne) plutôt qu'un simple mapping —
-// aucune dépendance à React/Supabase, testable avec des tableaux vides.
 export interface SeasonSummaryRawData {
   huilerieNom: string;
   saisonNom: string;
@@ -38,14 +31,6 @@ function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-/**
- * Construit le bilan d'une saison à partir de données déjà chargées
- * (une requête par module, filtrée par RLS et par saison_id — voir
- * getSeasonSummaryData() dans seasonClosure.ts). Le rendement moyen est
- * le ratio global huile/olives, pas la moyenne arithmétique des
- * rendements individuels (qui surpondérerait les petits pressages) —
- * 0 si aucune olive reçue, pour ne jamais diviser par zéro.
- */
 export function buildSeasonSummary(data: SeasonSummaryRawData): SeasonSummaryData {
   const totalOlivesKg = round2(data.depots.reduce((sum, d) => sum + d.poids_olives_kg, 0));
   const totalHuileKg = round2(data.pressages.reduce((sum, p) => sum + (p.quantite_huile_kg ?? 0), 0));

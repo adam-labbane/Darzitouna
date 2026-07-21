@@ -1,8 +1,3 @@
-// src/tests/clientProfile.test.ts
-//
-// Même approche que src/tests/factures.test.ts : un query builder
-// Supabase simulé et chaînable, pour vérifier quelle requête est
-// construite sans réseau ni base réelle.
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAllClientsFinancials, getClientProfile } from "../lib/clientProfile";
@@ -18,9 +13,6 @@ function createQueryBuilder(result: { data: unknown; error: unknown }) {
   return builder;
 }
 
-// Les 4 tables interrogées par getClientProfile (client/depot/
-// facture_service/pressage) — factorisé pour ne pas répéter le "pressage
-// vide par défaut" dans chaque test qui ne s'y intéresse pas.
 function createProfileBuilders(overrides: Partial<Record<string, { data: unknown; error: unknown }>> = {}) {
   return {
     client: createQueryBuilder(overrides.client ?? { data: { id: "client-1" }, error: null }),

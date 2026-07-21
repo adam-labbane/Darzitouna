@@ -1,10 +1,3 @@
-// src/components/ReadOnlyBanner.tsx
-//
-// Bandeau affiché sous l'en-tête quand la saison consultée n'est pas la
-// saison active (useSeasonConsultation().isReadOnly). Purement
-// informatif : le blocage réel des écritures est côté base (voir
-// seasonConsultationContext.tsx et la migration
-// 20260722100000_readonly_season_enforcement.sql).
 import { useSeasonConsultation } from "../hooks/useSeasonConsultation";
 
 export default function ReadOnlyBanner() {

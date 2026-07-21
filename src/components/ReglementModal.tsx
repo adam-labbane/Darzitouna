@@ -1,11 +1,3 @@
-// src/components/ReglementModal.tsx
-//
-// Enregistrement d'un règlement sur une facture — même pattern que
-// CuveFormModal/PressageModal (rendu conditionnel par le parent,
-// useFocusTrap, validation Zod au submit). Montant total / déjà payé /
-// reste dû toujours affichés en clair (pas seulement calculés en
-// silence), cartes de mode façon boutons aria-pressed (même pattern que
-// l'étape 3 de DepotNouveau.tsx pour Prestation/Achat).
 import { useState, type FormEvent } from "react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { computeResteDu } from "../lib/factureCalculations";

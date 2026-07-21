@@ -1,8 +1,3 @@
-// src/pages/Stocks.tsx
-//
-// Module Cuves : canvas visuel (vue d'ensemble) + liste avec actions.
-// La logique métier (accès données, calculs d'affichage) est déléguée à
-// src/lib/cuves.ts et src/lib/cuveDisplay.ts — cette page orchestre l'UI.
 import { useEffect, useState } from "react";
 import { Warehouse } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -22,18 +17,8 @@ import EmptyState from "../components/EmptyState";
 export default function Stocks() {
   const huilerieId = getHuilerieId();
   const currentUser = getCurrentUser();
-  // Décision UX uniquement : la vraie protection est le trigger
-  // enforce_correction_role côté base (voir supabase/migrations/
-  // 20260721090000_cuve_stock_safety.sql) — masquer ce bouton n'empêche
-  // pas un appel API direct, seule la base le fait.
   const isGerant = currentUser?.role === "GERANT";
 
-  // Les cuves sont un actif permanent, pas une donnée de saison : elles
-  // s'affichent identiquement quelle que soit la saison consultée. Seule
-  // la correction de niveau écrit un mouvement de stock daté d'une
-  // saison — elle cible donc toujours activeSaison (jamais la saison
-  // consultée) et disparaît en mode lecture seule, comme les autres
-  // actions d'écriture de saison (dépôt, pressage, facture, règlement).
   const { activeSaison, isReadOnly } = useSeasonConsultation();
 
   const [cuves, setCuves] = useState<Cuve[]>([]);

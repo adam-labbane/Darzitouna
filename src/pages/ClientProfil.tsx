@@ -1,12 +1,3 @@
-// src/pages/ClientProfil.tsx
-//
-// Fiche client détaillée : en-tête (reste dû visible), cartes de
-// chiffres, 3 onglets (Dépôts/Factures/Règlements), bascule saison
-// active / tout l'historique. Agrège Dépôts/Factures/Règlements
-// (src/lib/clientProfile.ts) et calcule les totaux à la volée
-// (src/lib/clientProfileCalculations.ts) — jamais le champ
-// client.solde_compte seul, qui n'est qu'un ajustement manuel. Route
-// /clients/:id.
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Truck, Factory, Receipt, Wallet } from "lucide-react";
@@ -28,10 +19,6 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import EmptyState from "../components/EmptyState";
 
 type Tab = "depots" | "pressages" | "factures" | "reglements";
-// "saison" = la saison consultée via le sélecteur global (contexte
-// partagé) ; "all" reste une extension propre à cette fiche (aucun autre
-// écran n'agrège plusieurs saisons à la fois), pas fusionnée dans le
-// sélecteur global.
 type Scope = "saison" | "all";
 
 const TAB_LABELS: Record<Tab, string> = {
@@ -73,11 +60,6 @@ export default function ClientProfil() {
   const navigate = useNavigate();
   const isGerant = getCurrentUser()?.role === "GERANT";
 
-  // Périmètre : la saison consultée (sélecteur global, contexte partagé)
-  // par défaut, bascule possible vers tout l'historique. On attend la
-  // résolution de la saison consultée avant le premier chargement de la
-  // fiche, pour ne jamais afficher "historique complet" par erreur
-  // pendant une fraction de seconde en scope "saison".
   const { consultedSaison, isReadOnly, loading: seasonLoading } = useSeasonConsultation();
   const [scope, setScope] = useState<Scope>("saison");
 
@@ -230,8 +212,6 @@ export default function ClientProfil() {
             <p className="text-sm text-gray-500">{profile.client.telephone ?? "Pas de téléphone"}</p>
           </div>
 
-          {/* Le reste dû n'est jamais porté par la seule couleur : le
-              libellé "Reste dû" accompagne toujours le montant. */}
           <div className="text-right">
             <p className="text-xs uppercase tracking-widest text-gray-400">Reste dû</p>
             <p
@@ -381,9 +361,6 @@ export default function ClientProfil() {
                         {pressage.quantite_huile_kg?.toFixed(2) ?? "—"} kg huile
                       </p>
                       <div className="flex justify-between items-center text-sm">
-                        {/* Le rendement n'est jamais porté par la seule
-                            couleur : la valeur en pourcentage est toujours
-                            affichée à côté (RGAA). */}
                         {rendementColor ? (
                           <span className="font-semibold" style={{ color: RENDEMENT_COLOR_HEX[rendementColor] }}>
                             Rendement : {pressage.rendement_final?.toFixed(2)} %

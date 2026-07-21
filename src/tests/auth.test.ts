@@ -1,8 +1,3 @@
-// src/tests/auth.test.ts
-//
-// Les fonctions de src/lib/auth.ts prennent le client Supabase en paramètre :
-// on peut donc les tester avec un client simulé, sans réseau ni variables
-// d'environnement Supabase.
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { endSession, fetchLoginUsers, startSession, verifyUserPin } from "../lib/auth";
@@ -74,7 +69,6 @@ describe("startSession", () => {
     expect(signInWithPassword).toHaveBeenCalledTimes(1);
     const call = signInWithPassword.mock.calls[0][0] as { email: string; password: string };
     expect(call.email).toBe("user-1@darzitouna.local");
-    // Le mot de passe ne doit jamais être le PIN en clair.
     expect(call.password).not.toBe("1234");
     expect(call.password).toMatch(/^[0-9a-f]{64}$/);
   });

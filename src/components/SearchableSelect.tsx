@@ -1,12 +1,3 @@
-// src/components/SearchableSelect.tsx
-//
-// Sélecteur générique avec recherche, pattern ARIA combobox — remplace
-// la recherche + liste de boutons dupliquée dans DepotNouveau.tsx
-// (étape 1) et FactureCreationModal.tsx. La recherche réseau (debounce +
-// fetch) reste dans la page appelante, comme avant : ce composant ne
-// gère que l'affichage/interaction (query/results/selected sont
-// contrôlés par le parent), un seul endroit à faire évoluer pour toute
-// sélection de client, jamais dupliqué.
 import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { X } from "lucide-react";
 import { moveActiveIndex } from "../lib/searchableSelect";

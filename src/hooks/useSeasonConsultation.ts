@@ -1,9 +1,3 @@
-// src/hooks/useSeasonConsultation.ts
-//
-// Contexte + hook de consultation de saison, séparés du composant
-// Provider (src/lib/seasonConsultationContext.tsx) pour respecter
-// react-refresh/only-export-components (un fichier de composant ne doit
-// exporter que des composants).
 import { createContext, useContext } from "react";
 import type { Saison } from "../types/saison";
 

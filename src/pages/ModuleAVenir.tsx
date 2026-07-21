@@ -1,10 +1,3 @@
-// src/pages/ModuleAVenir.tsx
-//
-// Placeholder générique pour les modules pas encore développés (Pressage,
-// Stocks, Factures, Grignons, Configuration). Un seul composant paramétré
-// plutôt que 5 fichiers de stub quasi identiques : chaque module sera
-// remplacé par sa vraie page le moment venu, en changeant juste l'élément
-// de la route dans App.tsx.
 import { Construction } from "lucide-react";
 
 interface ModuleAVenirProps {

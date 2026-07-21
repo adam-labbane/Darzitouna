@@ -1,11 +1,3 @@
-// src/components/ConfirmDialog.tsx
-//
-// Dialog de confirmation générique, réutilisable pour toute action
-// destructive de l'app (archivage client, plus tard fournisseur/cuve...).
-// La "double confirmation" demandée pour les actions destructives, c'est
-// ce dialog lui-même : le bouton d'action déclenche l'ouverture (1ère
-// intention), et il faut confirmer explicitement dedans (2e étape) — pas
-// de suppression accidentelle en un seul clic.
 import { useFocusTrap } from "../hooks/useFocusTrap";
 
 interface ConfirmDialogProps {

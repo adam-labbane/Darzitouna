@@ -1,8 +1,3 @@
-// src/tests/saisons.test.ts
-//
-// Même approche que src/tests/cuves.test.ts : un query builder Supabase
-// simulé et chaînable, pour vérifier quelle requête est construite sans
-// réseau ni base réelle.
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { activateSaison, createSaison, deactivateSaison, getSaisons, updateSaison } from "../lib/saisons";

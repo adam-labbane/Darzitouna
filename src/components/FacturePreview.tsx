@@ -1,11 +1,3 @@
-// src/components/FacturePreview.tsx
-//
-// Rendu visuel de la facture — pur composant d'affichage (données déjà
-// prêtes via buildFactureDocument(), src/lib/factureDocument.ts). Même
-// principe de séparation données/rendu que TicketPreview.tsx, mais mis
-// en forme comme un document officiel (pas contraint à la largeur d'un
-// ticket thermique) : en-tête huilerie, numéro, date, client, détail du
-// pressage facturé, montant, statut.
 import { getStatutLabel, STATUT_COLOR_HEX } from "../lib/factureCalculations";
 import type { FactureDocumentData } from "../lib/factureDocument";
 
@@ -48,9 +40,6 @@ export default function FacturePreview({ facture }: FacturePreviewProps) {
           <p className="font-semibold text-gray-900">{facture.clientNom}</p>
         </div>
 
-        {/* Le statut n'est jamais porté par la seule couleur : le
-            libellé texte est toujours affiché à côté de la pastille
-            (RGAA). */}
         <div className="flex items-center gap-2" role="status">
           <span
             className="w-3 h-3 rounded-full"

@@ -1,26 +1,14 @@
-// src/components/CuveFormModal.tsx
-//
-// Modal de création ET d'édition d'une cuve — même pattern que
-// ClientFormModal.tsx (rendu conditionnel par le parent, pas de prop
-// `open`, useFocusTrap, validation Zod au submit).
 import { useState, type FormEvent } from "react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { cuveSchema, TYPES_HUILE, type CuveFormInput } from "../lib/cuveSchema";
 import { isCapacityReductionValid, TYPE_HUILE_LABELS } from "../lib/cuveDisplay";
 
 interface CuveFormModalProps {
-  // Présent = mode édition (pré-remplit le formulaire), absent = création.
   initialValues?: {
     nom_reference: string;
     emplacement: string | null;
     type_huile: CuveFormInput["type_huile"];
     capacite_max: number;
-    // Niveau actuel de la cuve éditée — sert uniquement à donner un
-    // message d'erreur clair si la capacité est baissée en dessous
-    // (la contrainte CHECK cuve_niveau_within_capacity le refuse déjà
-    // côté base ; ce contrôle ne fait qu'éviter d'afficher un message
-    // générique "Vérifiez votre connexion" pour un problème qui n'a
-    // rien à voir avec le réseau).
     niveau_actuel: number;
   };
   onSubmit: (data: CuveFormInput) => Promise<void>;
@@ -75,10 +63,6 @@ export default function CuveFormModal({ initialValues, onSubmit, onClose }: Cuve
       return;
     }
 
-    // Pré-vérification côté client de la même règle que le CHECK
-    // constraint cuve_niveau_within_capacity : la base la refuserait de
-    // toute façon, mais avec un message clair ici plutôt qu'une erreur
-    // réseau générique.
     if (initialValues && !isCapacityReductionValid(result.data.capacite_max, initialValues.niveau_actuel)) {
       setFieldErrors({
         capacite_max: `La capacité ne peut pas être inférieure au niveau actuel de la cuve (${initialValues.niveau_actuel} L). Utilisez d'abord "Corriger le niveau" si besoin.`,

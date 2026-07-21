@@ -1,4 +1,3 @@
-// src/tests/factureSchema.test.ts
 import { describe, expect, it } from "vitest";
 import { factureSchema } from "../lib/factureSchema";
 

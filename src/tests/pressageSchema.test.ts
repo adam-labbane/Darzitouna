@@ -1,4 +1,3 @@
-// src/tests/pressageSchema.test.ts
 import { describe, expect, it } from "vitest";
 import { pressageSchema } from "../lib/pressageSchema";
 

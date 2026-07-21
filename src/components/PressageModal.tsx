@@ -1,10 +1,3 @@
-// src/components/PressageModal.tsx
-//
-// Modal de clôture d'un pressage — même pattern que CuveFormModal.tsx
-// (rendu conditionnel par le parent, useFocusTrap, validation Zod au
-// submit). Saisie de la quantité d'huile, rendement affiché en temps
-// réel, choix de la cuve avec place restante visible, avertissement non
-// bloquant si le type d'huile de la cuve ne correspond pas.
 import { useMemo, useState, type FormEvent } from "react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import {
@@ -22,9 +15,6 @@ import type { Cuve, TypeHuile } from "../types/cuve";
 interface PressageModalProps {
   depot: DepotEnAttente;
   cuves: Cuve[];
-  // null si aucune saison active n'a de prix configuré — le montant
-  // affiché en aperçu vaut alors 0, mais ce n'est qu'un aperçu ; le
-  // vrai calcul autoritaire est fait par create_pressage() côté base.
   prixKiloService: number | null;
   onSubmit: (data: { cuve_id: string; quantite_huile_kg: number; type_huile: TypeHuile }) => Promise<void>;
   onClose: () => void;
@@ -154,10 +144,6 @@ export default function PressageModal({
               </p>
             )}
 
-            {/* Le rendement n'est jamais porté par la seule couleur : la
-                valeur en pourcentage et le libellé texte sont toujours
-                affichés (RGAA — ne pas coder l'information uniquement
-                par la couleur). */}
             {rendement !== null && rendementColor && (
               <p id="pressage-rendement" className="mt-2 text-sm font-semibold">
                 Rendement :{" "}

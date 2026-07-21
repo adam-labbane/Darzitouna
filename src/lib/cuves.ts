@@ -1,15 +1,8 @@
-// src/lib/cuves.ts
-//
-// Accès aux données du module Cuves. Client Supabase injecté en paramètre
-// (même pattern que clients.ts/depots.ts) : testable sans réseau.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Cuve } from "../types/cuve";
 import type { CuveFormInput } from "./cuveSchema";
 import { computeCorrectionDelta } from "./cuveDisplay";
 
-// Liste les cuves non archivées de l'huilerie courante (RLS filtre déjà
-// par huilerie ; deleted_at IS NULL est un filtre métier, pas une
-// frontière de sécurité — même principe que clients.ts).
 export async function getCuves(client: SupabaseClient): Promise<Cuve[]> {
   const { data, error } = await client
     .from("cuve")
@@ -21,8 +14,6 @@ export async function getCuves(client: SupabaseClient): Promise<Cuve[]> {
   return data ?? [];
 }
 
-// Crée une cuve. niveau_actuel est toujours initialisé à 0 : une cuve
-// neuve est vide, elle ne se remplit que via des mouvements de stock.
 export async function createCuve(
   client: SupabaseClient,
   huilerieId: string,
@@ -45,8 +36,6 @@ export async function createCuve(
   return created;
 }
 
-// Modifie référence/emplacement/type/capacité — JAMAIS niveau_actuel,
-// qui n'existe même pas dans ce payload : voir correctCuveLevel().
 export async function updateCuve(
   client: SupabaseClient,
   id: string,
@@ -68,12 +57,6 @@ export async function updateCuve(
   return updated;
 }
 
-/**
- * Archive une cuve (soft delete). Le trigger protect_cuve_deletion
- * (migration 20260721090000_cuve_stock_safety.sql) refuse l'opération si
- * la cuve n'est pas vide — pas de vérification ici, la base est la
- * vraie garde.
- */
 export async function archiveCuve(client: SupabaseClient, id: string): Promise<void> {
   const { error } = await client
     .from("cuve")
@@ -91,14 +74,6 @@ export interface CorrectCuveLevelInput {
   raison: string;
 }
 
-/**
- * Corrige le niveau d'une cuve suite à un écart constaté (inventaire,
- * évaporation...). N'écrit JAMAIS directement cuve.niveau_actuel : un
- * simple INSERT dans mvt_stock_huile (type CORRECTION) déclenche le
- * trigger update_cuve_stock côté base, qui applique le delta ET vérifie
- * les bornes [0, capacite_max] — et le trigger enforce_correction_role
- * refuse l'opération si l'utilisateur connecté n'est pas GERANT.
- */
 export async function correctCuveLevel(
   client: SupabaseClient,
   input: CorrectCuveLevelInput,

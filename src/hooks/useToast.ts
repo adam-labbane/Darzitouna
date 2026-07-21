@@ -1,8 +1,3 @@
-// src/hooks/useToast.ts
-//
-// Contexte + hook de notifications, séparés du composant Provider
-// (src/components/Toast.tsx) pour respecter
-// react-refresh/only-export-components.
 import { createContext, useContext } from "react";
 
 export type ToastKind = "success" | "error";
