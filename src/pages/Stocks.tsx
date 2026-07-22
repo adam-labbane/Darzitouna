@@ -137,7 +137,11 @@ export default function Stocks() {
             )}
 
             {cuves.length === 0 ? (
-              <EmptyState icon={Warehouse} title="Aucune cuve" description="Créez la première avec le bouton +." />
+              <EmptyState
+                icon={Warehouse}
+                title="Aucune cuve"
+                description={isReadOnly ? undefined : "Créez la première avec le bouton +."}
+              />
             ) : (
               <div className="bg-white rounded-2xl shadow-soft divide-y divide-gray-100">
                 {cuves.map((cuve) => (
@@ -153,13 +157,15 @@ export default function Stocks() {
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEdit(cuve)}
-                      className="min-h-[48px] px-4 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors motion-reduce:transition-none"
-                    >
-                      Modifier
-                    </button>
+                    {!isReadOnly && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEdit(cuve)}
+                        className="min-h-[48px] px-4 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors motion-reduce:transition-none"
+                      >
+                        Modifier
+                      </button>
+                    )}
 
                     {isGerant && !isReadOnly && (
                       <button
@@ -173,7 +179,7 @@ export default function Stocks() {
                       </button>
                     )}
 
-                  {isGerant && (
+                  {isGerant && !isReadOnly && (
                     <button
                       type="button"
                       onClick={() => setArchiveTarget(cuve)}
@@ -197,14 +203,16 @@ export default function Stocks() {
         )}
       </main>
 
-      <button
-        type="button"
-        onClick={handleOpenCreate}
-        aria-label="Nouvelle cuve"
-        className="fixed bottom-24 md:bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 transition-transform motion-reduce:transition-none active:scale-95 flex items-center justify-center"
-      >
-        +
-      </button>
+      {!isReadOnly && (
+        <button
+          type="button"
+          onClick={handleOpenCreate}
+          aria-label="Nouvelle cuve"
+          className="fixed bottom-24 md:bottom-6 right-6 w-16 h-16 rounded-full bg-[#2D6A4F] text-white text-3xl font-bold shadow-xl hover:bg-green-800 transition-transform motion-reduce:transition-none active:scale-95 flex items-center justify-center"
+        >
+          +
+        </button>
+      )}
 
       {formOpen && (
         <CuveFormModal
