@@ -27,6 +27,20 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/rest/v1/'),
+            method: 'GET',
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'supabase-data',
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 7 * 24 * 60 * 60,
+              },
+            },
+          },
+        ],
       },
     }),
   ],
