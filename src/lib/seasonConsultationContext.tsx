@@ -3,6 +3,7 @@ import { supabase } from "./supabase";
 import { getSaisons } from "./saisons";
 import { isConsultationReadOnly } from "./seasonConsultation";
 import { SeasonConsultationContext, type SeasonConsultationValue } from "../hooks/useSeasonConsultation";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import type { Saison } from "../types/saison";
 
 export function SeasonConsultationProvider({ children }: { children: ReactNode }) {
@@ -29,9 +30,10 @@ export function SeasonConsultationProvider({ children }: { children: ReactNode }
     };
   }, []);
 
+  const isOnline = useOnlineStatus();
   const activeSaison = allSaisons.find((saison) => saison.is_active) ?? null;
   const consultedSaison = allSaisons.find((saison) => saison.id === consultedSaisonId) ?? null;
-  const isReadOnly = isConsultationReadOnly(consultedSaison, activeSaison);
+  const isReadOnly = isConsultationReadOnly(consultedSaison, activeSaison, isOnline);
 
   const refreshSaisons = async () => {
     const data = await getSaisons(supabase);

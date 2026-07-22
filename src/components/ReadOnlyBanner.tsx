@@ -1,9 +1,10 @@
 import { useSeasonConsultation } from "../hooks/useSeasonConsultation";
+import { isSeasonMismatch } from "../lib/seasonConsultation";
 
 export default function ReadOnlyBanner() {
-  const { isReadOnly, consultedSaison, activeSaison, setConsultedSaisonId } = useSeasonConsultation();
+  const { consultedSaison, activeSaison, setConsultedSaisonId } = useSeasonConsultation();
 
-  if (!isReadOnly || !consultedSaison) return null;
+  if (!isSeasonMismatch(consultedSaison, activeSaison) || !consultedSaison) return null;
 
   return (
     <div

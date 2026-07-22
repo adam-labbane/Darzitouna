@@ -4,16 +4,19 @@ import { supabase } from "../lib/supabase";
 import { getCurrentUser, getHuilerieId, logout } from "../lib/session";
 import { endSession } from "../lib/auth";
 import { getHuilerieName } from "../lib/huilerie";
+import { clearOfflineCache, warmOfflineCache } from "../lib/offlineWarmup";
 import { SeasonConsultationProvider } from "../lib/seasonConsultationContext";
 import { ToastProvider } from "./Toast";
 import Sidebar from "./Sidebar";
 import AppHeader from "./AppHeader";
 import BottomNav from "./BottomNav";
 import ReadOnlyBanner from "./ReadOnlyBanner";
+import OfflineBanner from "./OfflineBanner";
 
 export default function AppLayout() {
   const navigate = useNavigate();
   const currentUser = getCurrentUser();
+  const currentUserId = currentUser?.id;
   const huilerieId = getHuilerieId();
 
   const [huilerieNom, setHuilerieNom] = useState("Huilerie");
@@ -33,12 +36,18 @@ export default function AppLayout() {
     };
   }, [huilerieId]);
 
+  useEffect(() => {
+    if (!currentUserId) return;
+    void warmOfflineCache(supabase);
+  }, [currentUserId]);
+
   if (!currentUser) {
     return <Navigate to="/" replace />;
   }
 
   const handleLogout = async () => {
     await endSession(supabase).catch(() => {});
+    await clearOfflineCache();
     logout();
     navigate("/", { replace: true });
   };
@@ -54,6 +63,7 @@ export default function AppLayout() {
               currentUser={currentUser}
               onLogout={() => void handleLogout()}
             />
+            <OfflineBanner />
             <ReadOnlyBanner />
             <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
               <div className="max-w-7xl mx-auto w-full">
