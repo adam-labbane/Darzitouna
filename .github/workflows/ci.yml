@@ -37,3 +37,13 @@ jobs:
       # 6. Lance les tests unitaires
       - name: Tests unitaires
         run: npm test
+        
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Déclencher le déploiement Cloudflare Pages
+        run: curl -X POST "$DEPLOY_HOOK"
+        env:
+          DEPLOY_HOOK: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK }}
