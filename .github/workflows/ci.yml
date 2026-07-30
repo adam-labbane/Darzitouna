@@ -17,7 +17,7 @@ jobs:
 
       # 2. Installe Node.js
       - name: Installation de Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'
