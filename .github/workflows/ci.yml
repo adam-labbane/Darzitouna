@@ -13,7 +13,7 @@ jobs:
     steps:
       # 1. Récupère ton code
       - name: Checkout du code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # 2. Installe Node.js
       - name: Installation de Node.js
