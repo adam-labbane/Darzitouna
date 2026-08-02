@@ -27,6 +27,10 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        // Sans cette exclusion, le service worker sert index.html pour toute
+        // navigation : /sonde-api afficherait le 404 de React Router au lieu
+        // d'atteindre la Pages Function.
+        navigateFallbackDenylist: [/^\/sonde-/],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.pathname.startsWith('/rest/v1/'),
