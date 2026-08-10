@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@sentry/react": "^10.70.0",
     "@supabase/supabase-js": "^2.111.0",
     "lucide-react": "^1.27.0",
     "qrcode": "^1.5.4",

@@ -14,11 +14,18 @@ import Factures from "./pages/Factures";
 import Config from "./pages/Config";
 import ModuleAVenir from "./pages/ModuleAVenir";
 import TicketPublic from "./pages/TicketPublic";
+// TEMPORAIRE — sonde Sentry, à retirer après validation (voir TestSentry.tsx).
+import TestSentry from "./pages/TestSentry";
 
 const router = createBrowserRouter([
   {
     path: "/t/:token",
     element: <TicketPublic />,
+  },
+  // TEMPORAIRE — sonde Sentry, à retirer après validation.
+  {
+    path: "/test-sentry",
+    element: <TestSentry />,
   },
   {
     path: "/setup",
