@@ -59,6 +59,34 @@ export default defineConfig({
     }),
   ],
   test: {
-    environment: 'node',
+    // Deux projets plutôt qu'un environnement unique : les tests de logique
+    // métier restent en `node` (démarrage quasi instantané), et seuls les
+    // rares tests de rendu paient le coût de jsdom.
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          environment: 'node',
+          include: ['src/tests/*.test.{ts,js}'],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'dom',
+          environment: 'jsdom',
+          include: ['src/tests/dom/*.test.tsx'],
+          // src/lib/supabase.ts appelle createClient dès l'import du module :
+          // sans ces valeurs, le simple fait d'importer App ferait échouer le
+          // test sur « supabaseUrl is required ». Aucune requête n'est émise,
+          // les écrans testés ne déclenchent pas d'appel réseau.
+          env: {
+            VITE_SUPABASE_URL: 'http://localhost:54321',
+            VITE_SUPABASE_ANON_KEY: 'cle-anon-de-test',
+          },
+        },
+      },
+    ],
   },
 })
