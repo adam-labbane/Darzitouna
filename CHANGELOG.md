@@ -10,10 +10,11 @@ datée du jour de sa mise en ligne. Une version mineure ajoute une fonctionnalit
 sans rupture, une version corrective ne contient que des correctifs. Chaque
 version correspond à une étiquette Git annotée (`vX.Y.Z`) et à une release GitHub.
 
-**Traçabilité des correctifs** — toute entrée « Corrigé » référence sa fiche
-d'anomalie (`A-nn`) et le changement qui l'a résolue. Les correctifs antérieurs à
-la version 1.3.0 sont dépourvus de fiche : le processus de consignation n'existait
-pas encore, et aucune fiche n'a été créée rétrospectivement.
+**Traçabilité des correctifs** — le processus consigne les anomalies **constatées en
+recette, en production ou au support** : chacune fait l'objet d'une fiche (`A-nn`),
+liée à son issue GitHub, référencée par l'entrée « Corrigé » correspondante. Les
+ajustements internes réalisés en cours de développement, avant toute mise en
+service, ne donnent pas lieu à une fiche et sont référencés par leur commit.
 
 **Processus de livraison** — à compter de la version 1.3.0, toute modification
 transite par une Pull Request ; chaque déploiement notable donne lieu à une montée
@@ -61,8 +62,9 @@ outillage de suivi des anomalies. Aucun changement fonctionnel pour l'utilisateu
 
 ### Corrigé
 
-- **Page blanche en production, versions de React désalignées** — fiche **A-03**,
-  commit [`4f8ea0c`](https://github.com/adam-labbane/Darzitouna/commit/4f8ea0c).
+- **Page blanche en production, versions de React désalignées** — fiche
+  [A-03](https://github.com/adam-labbane/Darzitouna/issues/22), commit
+  [`4f8ea0c`](https://github.com/adam-labbane/Darzitouna/commit/4f8ea0c).
   Une mise à jour automatique avait monté `react` en 19.2.8 sans toucher à
   `react-dom`, resté en 19.2.7 ; React refuse de démarrer sur deux versions
   différentes (erreur #527) et l'application ne s'affichait plus, alors que
@@ -83,27 +85,20 @@ outillage de suivi des anomalies. Aucun changement fonctionnel pour l'utilisateu
   jamais la frontière d'erreur ni Sentry ; ajout d'un `errorElement` sur la route
   racine, couvrant toutes les pages.
 
-### Sécurité
-
-- La clé anon Supabase utilisée par la sonde est désormais transmise en en-tête
-  depuis le serveur, à partir d'une variable d'environnement Cloudflare, au lieu de
-  figurer dans une URL de redirection publique. Elle disparaît ainsi des journaux
-  Cloudflare, des journaux du moniteur et de l'en-tête `Referer`.
-
 ---
 
 ## [1.2.1] — 2026-07-22
 
 ### Corrigé
 
-- **Actions d'écriture proposées sur l'écran Cuves en mode consultation** —
+- **Actions d'écriture proposées sur l'écran Cuves en mode consultation** — fiche
+  [A-02](https://github.com/adam-labbane/Darzitouna/issues/24),
   [PR #3](https://github.com/adam-labbane/Darzitouna/pull/3), merge
   [`84e144c`](https://github.com/adam-labbane/Darzitouna/commit/84e144c). Les boutons
   de modification, de correction de niveau et d'archivage restaient visibles alors
   que l'écriture était indisponible, dans les deux situations qui font basculer
   l'application en consultation : saison archivée et mode hors ligne. Ils sont
-  désormais masqués, en cohérence avec le blocage déjà appliqué côté base. Aucune
-  fiche d'anomalie : le processus de consignation n'existait pas encore.
+  désormais masqués, en cohérence avec le blocage déjà appliqué côté base.
 
 ---
 
@@ -132,6 +127,14 @@ outillage de suivi des anomalies. Aucun changement fonctionnel pour l'utilisateu
 ### Modifié
 
 - Refonte de l'habillage visuel et améliorations d'accessibilité.
+
+### Corrigé
+
+- **Migration du portail dépendante du `search_path`** — fiche
+  [A-01](https://github.com/adam-labbane/Darzitouna/issues/23). La génération du
+  token public reposait sur `gen_random_bytes`, dont la résolution dépend du
+  `search_path` ; l'échec a été détecté au déploiement en production. La migration
+  utilise désormais `gen_random_uuid`, qui n'en dépend pas.
 
 ---
 

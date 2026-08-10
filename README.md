@@ -40,7 +40,7 @@ D'autres captures (facturation, wizard de dépôt, mode hors ligne, vues par rô
 | Routage | React Router 7 |
 | Backend | Supabase (PostgreSQL, Auth, PostgREST), toute la logique métier en base (RLS, triggers, fonctions RPC) |
 | Hors ligne | vite-plugin-pwa (Workbox) — precache de l'application, cache runtime des données consultées |
-| Tests | Vitest (logique métier + smoke test jsdom, 359 tests), Playwright (vérifications bout en bout en développement) |
+| Tests | Vitest — logique métier (environnement Node) et smoke test de démarrage (jsdom), 359 tests |
 | Qualité | ESLint, TypeScript strict, GitHub Actions |
 
 ---
