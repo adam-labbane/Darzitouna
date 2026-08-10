@@ -23,6 +23,24 @@ release GitHub.
 
 ---
 
+## [1.3.1] — 2026-08-10
+
+### Corrigé
+
+- **Libellés métier altérés par la traduction automatique du navigateur** — fiche
+  [#26](https://github.com/adam-labbane/Darzitouna/issues/26), signalée par un
+  utilisateur pilote. Sur une tablette dont la traduction automatique de Chrome
+  était active, des libellés étaient réécrits — « Stocks » devenait « Actions » —
+  la détection de langue étant trompée par des termes ambigus. La page se déclarait
+  en anglais (`<html lang="en">`, valeur héritée du gabarit de départ) alors que
+  l'interface est en français, ce qui déclenchait la proposition de traduction. La
+  langue est désormais correctement déclarée et la traduction automatique est
+  refusée, par l'attribut standard `translate="no"` et par la balise `notranslate`
+  pour Google Traduction. Le besoin sous-jacent des utilisateurs arabophones sera
+  traité par l'internationalisation FR/AR prévue, non par la traduction machine.
+
+---
+
 ## [1.3.0] — 2026-08-10
 
 Version de maintenance : supervision, fiabilisation de la chaîne de livraison et
@@ -175,6 +193,7 @@ Première mise en production.
 
 ---
 
+[1.3.1]: https://github.com/adam-labbane/Darzitouna/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/adam-labbane/Darzitouna/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/adam-labbane/Darzitouna/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/adam-labbane/Darzitouna/compare/v1.1.0...v1.2.0
