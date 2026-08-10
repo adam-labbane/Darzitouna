@@ -1,0 +1,101 @@
+name: "🐞 Fiche d'anomalie"
+description: "Consigner un dysfonctionnement constaté"
+title: "[Anomalie] "
+labels: ["anomalie"]
+body:
+  - type: dropdown
+    id: gravite
+    attributes:
+      label: "Gravité constatée"
+      description: "Impact réel sur l'exploitation de l'huilerie, tel que constaté."
+      options:
+        - "Critique — service inutilisable"
+        - "Majeure — fonction importante dégradée"
+        - "Mineure — gêne sans blocage"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environnement
+    attributes:
+      label: "Environnement"
+      options:
+        - "Production (darzitounas.com)"
+        - "Preview (staging)"
+        - "Local"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: "Version de l'application"
+      placeholder: "v1.2.1 — visible dans le journal des versions ; « inconnue » accepté"
+    validations:
+      required: true
+
+  - type: input
+    id: appareil
+    attributes:
+      label: "Appareil et navigateur"
+      placeholder: "Tablette Samsung — Chrome 138"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: role
+    attributes:
+      label: "Rôle connecté"
+      options:
+        - "Gérant"
+        - "Opérateur"
+        - "Agriculteur (page publique)"
+        - "Non connecté"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "Étapes pour reproduire"
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: attendu
+    attributes:
+      label: "Résultat attendu"
+    validations:
+      required: true
+
+  - type: textarea
+    id: obtenu
+    attributes:
+      label: "Résultat obtenu"
+      description: "Coller le message d'erreur exact si présent."
+    validations:
+      required: true
+
+  - type: textarea
+    id: elements-joints
+    attributes:
+      label: "Éléments joints"
+      description: "Captures d'écran, lien Sentry, extrait de log."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: source-detection
+    attributes:
+      label: "Source de détection"
+      options:
+        - "Recette"
+        - "Supervision (Sentry ou sonde)"
+        - "Retour utilisateur"
+        - "Développement"
+    validations:
+      required: true

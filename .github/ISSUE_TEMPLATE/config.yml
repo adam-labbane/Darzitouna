@@ -1,0 +1,4 @@
+# Aucune issue vierge : toute anomalie passe par la fiche structurée, afin que
+# gravité, environnement, version et étapes de reproduction soient toujours
+# renseignés — c'est ce qui rend le suivi exploitable.
+blank_issues_enabled: false
