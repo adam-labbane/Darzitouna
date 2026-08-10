@@ -15,6 +15,11 @@ d'anomalie (`A-nn`) et le changement qui l'a résolue. Les correctifs antérieur
 la version 1.3.0 sont dépourvus de fiche : le processus de consignation n'existait
 pas encore, et aucune fiche n'a été créée rétrospectivement.
 
+**Processus de livraison** — à compter de la version 1.3.0, toute modification
+transite par une Pull Request ; chaque déploiement notable donne lieu à une montée
+de version SemVer, son entrée dans ce journal, son étiquette Git annotée et sa
+release GitHub.
+
 ---
 
 ## [1.3.0] — 2026-08-10
@@ -61,9 +66,12 @@ outillage de suivi des anomalies. Aucun changement fonctionnel pour l'utilisateu
   Une mise à jour automatique avait monté `react` en 19.2.8 sans toucher à
   `react-dom`, resté en 19.2.7 ; React refuse de démarrer sur deux versions
   différentes (erreur #527) et l'application ne s'affichait plus, alors que
-  l'intégration continue était au vert. Correction par alignement des deux paquets
-  en 19.2.8 ; prévention par le regroupement Dependabot et par le smoke test jsdom,
-  qui échoue désormais sur ce désalignement avant toute fusion.
+  l'intégration continue était au vert. Séquence de traitement : détection en
+  production, puis rétablissement immédiat du service par retour arrière Cloudflare
+  Pages vers le build antérieur — opération de plateforme, sans trace dans Git —,
+  puis correction de fond par alignement de `react-dom` en 19.2.8, enfin prévention
+  par le regroupement Dependabot de `react` et `react-dom` et par le smoke test
+  jsdom, qui échoue désormais sur ce désalignement avant toute fusion.
 - **Sonde `/sonde-api` inaccessible depuis un navigateur** — commit
   [`803b681`](https://github.com/adam-labbane/Darzitouna/commit/803b681). Le service
   worker servait `index.html` pour toute navigation, empêchant la requête
@@ -88,13 +96,14 @@ outillage de suivi des anomalies. Aucun changement fonctionnel pour l'utilisateu
 
 ### Corrigé
 
-- **Actions d'écriture proposées sur l'écran Cuves en saison archivée** —
+- **Actions d'écriture proposées sur l'écran Cuves en mode consultation** —
   [PR #3](https://github.com/adam-labbane/Darzitouna/pull/3), merge
   [`84e144c`](https://github.com/adam-labbane/Darzitouna/commit/84e144c). Les boutons
-  de modification, de correction de niveau et d'archivage restaient visibles lors de
-  la consultation d'une saison en lecture seule ; ils sont désormais masqués, en
-  cohérence avec le blocage déjà appliqué côté base. Aucune fiche d'anomalie : le
-  processus de consignation n'existait pas encore.
+  de modification, de correction de niveau et d'archivage restaient visibles alors
+  que l'écriture était indisponible, dans les deux situations qui font basculer
+  l'application en consultation : saison archivée et mode hors ligne. Ils sont
+  désormais masqués, en cohérence avec le blocage déjà appliqué côté base. Aucune
+  fiche d'anomalie : le processus de consignation n'existait pas encore.
 
 ---
 

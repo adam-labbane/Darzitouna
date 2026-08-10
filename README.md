@@ -40,7 +40,7 @@ D'autres captures (facturation, wizard de dépôt, mode hors ligne, vues par rô
 | Routage | React Router 7 |
 | Backend | Supabase (PostgreSQL, Auth, PostgREST), toute la logique métier en base (RLS, triggers, fonctions RPC) |
 | Hors ligne | vite-plugin-pwa (Workbox) — precache de l'application, cache runtime des données consultées |
-| Tests | Vitest (logique métier, 322 tests), Playwright (vérifications bout en bout en développement) |
+| Tests | Vitest (logique métier + smoke test jsdom, 359 tests), Playwright (vérifications bout en bout en développement) |
 | Qualité | ESLint, TypeScript strict, GitHub Actions |
 
 ---
@@ -137,16 +137,30 @@ Ces identifiants ne valent que pour les données de test rejouées par `supabase
 Chiffres obtenus en exécutant réellement les commandes ci-dessous sur l'état actuel du dépôt :
 
 ```bash
-npx vitest run           # 37 fichiers, 322 tests, tous verts
-npx vitest run --coverage
+npx vitest run           # 41 fichiers, 359 tests, tous verts
+```
+
+Les tests sont répartis en deux projets Vitest : `unit` (environnement Node) couvre la
+logique métier de `src/lib`, `dom` (environnement jsdom) monte l'application réelle pour
+vérifier qu'elle démarre — un désalignement `react` / `react-dom` ou un routeur mal câblé
+y échoue, ce que la compilation et le lint ne peuvent pas détecter.
+
+La couverture est mesurée sur la couche métier, celle que les tests unitaires ciblent :
+
+```bash
+npx vitest run --coverage --coverage.include='src/lib/**'
 ```
 
 ```
-Statements   : 95.35% ( 390/409 )
-Branches     : 86.30% ( 252/292 )
-Functions    : 98.33% ( 118/120 )
-Lines        : 99.69% ( 324/325 )
+Statements   : 85.53% ( 414/484 )
+Branches     : 79.17% ( 270/341 )
+Functions    : 83.78% ( 124/148 )
+Lines        : 88.91% ( 345/388 )
 ```
+
+Les composants et les pages ne sont pas couverts unitairement : ils sont vérifiés par le
+smoke test de démarrage et par la recette manuelle. Une couverture globale, incluant
+`src/components` et `src/pages`, s'établirait donc autour de 24 %.
 
 ```bash
 npx tsc -b     # 0 erreur
