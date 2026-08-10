@@ -23,6 +23,33 @@ release GitHub.
 
 ---
 
+## [1.3.2] — 2026-08-10
+
+### Corrigé
+
+- **Listes non rafraîchies après création, modification ou suppression** — fiche
+  [#29](https://github.com/adam-labbane/Darzitouna/issues/29), constatée en
+  production sur la création d'un client. L'enregistrement réussissait en base et la
+  modale se fermait, mais la liste continuait d'afficher l'état antérieur : le
+  nouveau client n'apparaissait qu'après un rechargement manuel, au risque que
+  l'utilisateur croie à un échec et saisisse deux fois.
+
+  La cause ne se trouvait pas dans les écrans — tous rappellent bien leurs données
+  après mutation — mais dans la stratégie de cache du service worker. Les lectures
+  `GET /rest/v1/` étaient servies en `StaleWhileRevalidate` : la réponse en cache
+  était renvoyée immédiatement et la revalidation n'intervenait qu'en arrière-plan.
+  La relecture déclenchée juste après une écriture recevait donc l'état d'avant
+  celle-ci. Le défaut était systémique et concernait tous les écrans à liste, la
+  consultation hors ligne masquant simplement le problème le reste du temps.
+
+  La stratégie passe en `NetworkFirst` avec un délai réseau de 3 secondes : en
+  ligne, les données affichées sont toujours fraîches ; hors ligne ou sur réseau
+  trop lent, la dernière réponse connue reste servie, la consultation hors ligne est
+  donc préservée. Un test de non-régression verrouille en outre le contrat côté
+  application : la liste des clients est relue après création.
+
+---
+
 ## [1.3.1] — 2026-08-10
 
 ### Corrigé
@@ -193,6 +220,7 @@ Première mise en production.
 
 ---
 
+[1.3.2]: https://github.com/adam-labbane/Darzitouna/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/adam-labbane/Darzitouna/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/adam-labbane/Darzitouna/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/adam-labbane/Darzitouna/compare/v1.2.0...v1.2.1

@@ -45,9 +45,18 @@ export default defineConfig({
           {
             urlPattern: ({ url }) => url.pathname.startsWith('/rest/v1/'),
             method: 'GET',
-            handler: 'StaleWhileRevalidate',
+            // NetworkFirst et non StaleWhileRevalidate : ce dernier renvoyait
+            // immédiatement la réponse en cache et ne revalidait qu'en arrière-plan.
+            // Une liste rechargée juste après une création affichait donc l'état
+            // d'AVANT la mutation, et le nouvel enregistrement n'apparaissait
+            // qu'au rechargement suivant — au risque que l'utilisateur croie à un
+            // échec et saisisse deux fois.
+            // Le cache reste un filet de sécurité hors ligne : au-delà du délai
+            // réseau, ou sans réseau du tout, la dernière réponse connue est servie.
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-data',
+              networkTimeoutSeconds: 3,
               expiration: {
                 maxEntries: 200,
                 maxAgeSeconds: 7 * 24 * 60 * 60,
