@@ -157,6 +157,16 @@ Captures correspondantes : [`18-vitest-run.png`](docs/captures/18-vitest-run.png
 
 ---
 
+## Versionnage
+
+Le projet suit [SemVer](https://semver.org/lang/fr/) : `MAJEUR.MINEUR.CORRECTIF`, une version par mise en production.
+
+Chaque version déployée est consignée dans [`CHANGELOG.md`](CHANGELOG.md), au format Keep a Changelog, avec ses correctifs référencés à leur fiche d'anomalie.
+
+Chaque version correspond à une étiquette Git annotée (`vX.Y.Z`) et à une [release GitHub](https://github.com/adam-labbane/Darzitouna/releases).
+
+---
+
 ## CI/CD
 
 ```
