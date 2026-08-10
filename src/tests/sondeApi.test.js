@@ -119,8 +119,30 @@ describe("sonde-api", () => {
     const response = await onRequestGet({ env: { VITE_SUPABASE_URL: ENV.VITE_SUPABASE_URL } });
 
     expect(response.status).toBe(503);
-    expect((await response.json()).reason).toBe("missing_env");
+    expect((await response.json()).reason).toBe("missing_env:SUPABASE_ANON_KEY");
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("nomme l'URL absente quand c'est elle qui manque", async () => {
+    stubFetch(okResponse);
+
+    const response = await onRequestGet({
+      env: { SUPABASE_ANON_KEY: ENV.SUPABASE_ANON_KEY },
+    });
+
+    expect((await response.json()).reason).toBe(
+      "missing_env:SUPABASE_URL|VITE_SUPABASE_URL",
+    );
+  });
+
+  it("nomme les deux variables quand rien n'est configuré", async () => {
+    stubFetch(okResponse);
+
+    const response = await onRequestGet({ env: {} });
+
+    expect((await response.json()).reason).toBe(
+      "missing_env:SUPABASE_URL|VITE_SUPABASE_URL,SUPABASE_ANON_KEY",
+    );
   });
 
   it("répond aussi en HEAD, sondé par certains moniteurs", async () => {

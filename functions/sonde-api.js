@@ -30,8 +30,13 @@ export async function onRequestGet({ env }) {
   const anonKey = env.SUPABASE_ANON_KEY;
 
   // Une sonde mal configurée doit virer au rouge, pas passer silencieusement.
-  if (!baseUrl || !anonKey) {
-    return json({ status: "down", reason: "missing_env" }, 503);
+  // La raison nomme la variable absente : sans ça, le diagnostic se fait à
+  // l'aveugle depuis le dashboard Cloudflare.
+  const missing = [];
+  if (!baseUrl) missing.push("SUPABASE_URL|VITE_SUPABASE_URL");
+  if (!anonKey) missing.push("SUPABASE_ANON_KEY");
+  if (missing.length > 0) {
+    return json({ status: "down", reason: `missing_env:${missing.join(",")}` }, 503);
   }
 
   const url =
